@@ -51,5 +51,7 @@ media/
 *.priv
 *.key
 
-
+# Test files with API keys
 test_s3_content.py
+test_gemini_models.py
+test_s3_content_safe.py

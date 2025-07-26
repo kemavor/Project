@@ -8,23 +8,27 @@ from botocore.exceptions import ClientError, NoCredentialsError
 
 class GeminiService:
     def __init__(self):
-        # Initialize Gemini AI
-        self.api_key = "AIzaSyApVQ5Y6B3w97Z3Qk22oP9S0dUvZqTDbvY"
-        genai.configure(api_key=self.api_key)
-
-        try:
-            # Try different model names
-            try:
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
-            except Exception:
-                try:
-                    self.model = genai.GenerativeModel('gemini-1.5-pro')
-                except Exception:
-                    # Fallback to basic model
-                    self.model = genai.GenerativeModel('gemini-2.0-flash')
-        except Exception as e:
-            print(f"Warning: Could not initialize Gemini model: {e}")
+        # Initialize Gemini AI with environment variable
+        self.api_key = os.getenv('GEMINI_API_KEY')
+        if not self.api_key:
+            print("Warning: GEMINI_API_KEY environment variable not set")
             self.model = None
+        else:
+            genai.configure(api_key=self.api_key)
+
+            try:
+                # Try different model names
+                try:
+                    self.model = genai.GenerativeModel('gemini-1.5-flash')
+                except Exception:
+                    try:
+                        self.model = genai.GenerativeModel('gemini-1.5-pro')
+                    except Exception:
+                        # Fallback to basic model
+                        self.model = genai.GenerativeModel('gemini-2.0-flash')
+            except Exception as e:
+                print(f"Warning: Could not initialize Gemini model: {e}")
+                self.model = None
 
         # Initialize S3 client
         self.s3_client = boto3.client(

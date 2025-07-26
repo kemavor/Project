@@ -71,22 +71,33 @@ const Login = () => {
   const config = roleConfig[selectedRole];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 relative overflow-hidden px-2 sm:px-4">
+    <div 
+      className="min-h-screen flex items-center justify-center relative overflow-hidden px-2 sm:px-4"
+      style={{
+        backgroundImage: 'url(/Background/login_bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Overlay for better readability */}
+      <div className="absolute inset-0 bg-black/40"></div>
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
-              </div>
+      </div>
 
       <div className="relative z-10 w-full max-w-3xl mx-auto">
-        <div className="flex flex-col md:flex-row rounded-2xl shadow-2xl overflow-hidden bg-white/90">
+        <div className="flex flex-col md:flex-row rounded-2xl shadow-2xl overflow-hidden bg-white/70 backdrop-blur-sm">
           {/* Left Panel */}
-          <div className="md:w-1/2 w-full bg-gradient-to-br from-blue-600 to-purple-600 flex flex-col items-center justify-center p-8 text-white relative">
+          <div className="md:w-1/2 w-full bg-gradient-to-br from-blue-600/90 to-black/90 flex flex-col items-center justify-center p-8 text-white relative backdrop-blur-sm">
             <div className="flex flex-col items-center w-full">
               <img src="/visionware-logo.png" alt="VisionWare Logo" className="w-16 h-16 rounded-2xl shadow-xl mb-4" />
               <h2 className="text-3xl font-bold mb-2">Welcome Back!</h2>
-              <p className="text-white/80 mb-6 text-center">Sign in to your VisionWare account to access your courses, lectures, and more.</p>
+              <p className="text-white/90 mb-6 text-center">Sign in to your VisionWare account to access your courses, lectures, and more.</p>
               <button
                 onClick={() => navigate('/register')}
                 className="border border-white rounded-full px-8 py-2 font-semibold text-white hover:bg-white/10 transition mb-2"
@@ -94,14 +105,14 @@ const Login = () => {
                 Create Account
               </button>
             </div>
-        </div>
+          </div>
 
           {/* Right Panel (Login Form) */}
-          <div className="md:w-1/2 w-full bg-white flex flex-col justify-center p-8">
+          <div className="md:w-1/2 w-full bg-white/70 backdrop-blur-sm flex flex-col justify-center p-8">
             <div className="text-center mb-6">
               <div className="flex justify-center mb-2">
                 <div className={`w-12 h-12 bg-gradient-to-r ${config.gradient} rounded-2xl flex items-center justify-center shadow-xl`}>
-                <div className="text-white">
+                  <div className="text-white">
                     {config.icon}
                   </div>
                 </div>
@@ -112,69 +123,69 @@ const Login = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
                 <Label htmlFor="role" className="text-sm font-semibold text-gray-800">Select Your Role</Label>
-            <Select value={selectedRole} onValueChange={(value: any) => setSelectedRole(value)}>
+                <Select value={selectedRole} onValueChange={(value: any) => setSelectedRole(value)}>
                   <SelectTrigger className="border-2 border-gray-200 bg-white/80 focus:border-blue-500">
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="student">Student</SelectItem>
-                <SelectItem value="teacher">Teacher</SelectItem>
-                <SelectItem value="admin">Administrator</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1">
                 <Label htmlFor="username" className="text-sm font-semibold text-gray-800">Username</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="Enter your username"
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (error) setError('');
+                    }}
+                    placeholder="Enter your username"
                     className={`pl-10 pr-4 py-2 border-2 border-gray-200 bg-white/80 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
-                  disabled={isLoading}
-                />
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
-            </div>
               <div className="space-y-1">
                 <Label htmlFor="password" className="text-sm font-semibold text-gray-800">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="Enter your password"
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError('');
+                    }}
+                    placeholder="Enter your password"
                     className={`pl-10 pr-10 py-2 border-2 border-gray-200 bg-white/80 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                >
-                  {showPassword ? (
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                  >
+                    {showPassword ? (
                       <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
+                    ) : (
                       <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </Button>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
               {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50/90 animate-in slide-in-from-top-2">
+                <Alert variant="destructive" className="border-red-200 bg-red-50/80 animate-in slide-in-from-top-2">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="flex items-center">
                     <XCircle className="h-4 w-4 mr-2 text-red-500" />
@@ -187,34 +198,34 @@ const Login = () => {
                 className={`w-full bg-gradient-to-r ${config.gradient} hover:opacity-90 shadow-xl text-white font-semibold py-2 text-base transition-all duration-300 transform hover:scale-[1.02]`} 
                 disabled={isLoading}
               >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Signing in...
-                </>
-              ) : (
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Signing in...
+                  </>
+                ) : (
                   <>
                     Sign In
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
-              )}
-            </Button>
+                )}
+              </Button>
               <div className="flex flex-col items-center gap-2 pt-2">
-            <Button
-              variant="link"
-              onClick={() => navigate('/register')}
+                <Button
+                  variant="link"
+                  onClick={() => navigate('/register')}
                   className="text-gray-600 hover:text-blue-600 font-medium px-0"
-            >
-                Don't have an account? Sign up here
-            </Button>
-            <Button
-              variant="link"
-              onClick={() => navigate('/forgot-password')}
+                >
+                  Don't have an account? Sign up here
+                </Button>
+                <Button
+                  variant="link"
+                  onClick={() => navigate('/forgot-password')}
                   className="text-gray-600 hover:text-blue-600 font-medium px-0"
-            >
-              Forgot your password?
-            </Button>
-          </div>
+                >
+                  Forgot your password?
+                </Button>
+              </div>
             </form>
           </div>
         </div>
