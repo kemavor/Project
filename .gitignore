@@ -50,3 +50,6 @@ media/
 *.pem
 *.priv
 *.key
+
+
+test_s3_content.py
