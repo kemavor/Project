@@ -9,7 +9,6 @@ from botocore.exceptions import ClientError, NoCredentialsError
 class GeminiService:
     def __init__(self):
         # Initialize Gemini AI
-        self.api_key = "AIzaSyApVQ5Y6B3w97Z3Qk22oP9S0dUvZqTDbvY"
         genai.configure(api_key=self.api_key)
 
         try:
