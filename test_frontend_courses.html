@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Courses API</title>
+</head>
+<body>
+    <h1>Test Courses API</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testCourses()">Test Courses</button>
+    <div id="output"></div>
+
+    <script>
+        let token = '';
+
+        async function testLogin() {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Logging in...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'test_teacher',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    token = data.token;
+                    output.innerHTML = `✅ Login successful! Token: ${token.substring(0, 50)}...`;
+                } else {
+                    output.innerHTML = `❌ Login failed: ${JSON.stringify(data)}`;
+                }
+            } catch (error) {
+                output.innerHTML = `❌ Login error: ${error}`;
+            }
+        }
+
+        async function testCourses() {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Fetching courses...';
+            
+            if (!token) {
+                output.innerHTML = '❌ Please login first!';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/courses', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    output.innerHTML = `✅ Courses fetched successfully! Found ${data.length} courses:<br>` +
+                        data.map(course => `- ${course.title} (ID: ${course.id})`).join('<br>');
+                } else {
+                    output.innerHTML = `❌ Courses fetch failed: ${JSON.stringify(data)}`;
+                }
+            } catch (error) {
+                output.innerHTML = `❌ Courses fetch error: ${error}`;
+            }
+        }
+    </script>
+</body>
+</html> 
