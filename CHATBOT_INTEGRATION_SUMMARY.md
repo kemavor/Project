@@ -43,7 +43,7 @@ We've successfully integrated **Google Gemini AI** into VisionWare to create **E
 
 ```python
 class GeminiService:
-    - API Key: AIzaSyApVQ5Y6B3w97Z3Qk22oP9S0dUvZqTDbvY
+    - API Key: Environment variable (GEMINI_API_KEY)
     - Model: gemini-1.5-flash
     - S3 Integration for course content
     - Context-aware prompt engineering
@@ -100,8 +100,8 @@ DELETE /api/chatbot/sessions/{id}   # Delete session
 ### **Environment Variables**
 
 ```bash
-# Gemini API Key (already configured)
-GEMINI_API_KEY=AIzaSyApVQ5Y6B3w97Z3Qk22oP9S0dUvZqTDbvY
+# Gemini API Key (set this in your environment)
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # S3 Configuration (existing)
 AWS_ACCESS_KEY_ID=your_access_key
