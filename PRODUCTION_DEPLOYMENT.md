@@ -1,236 +1,300 @@
-# VisionWare Production Deployment Guide
+# 🚀 VisionWare Production Deployment Guide
 
-## Overview
+This guide provides comprehensive instructions for deploying VisionWare in a production environment with proper security, monitoring, and scalability.
 
-This guide will help you deploy VisionWare to production with proper security, performance, and scalability configurations.
+## 📋 Prerequisites
 
-## Prerequisites
+### System Requirements
 
-### 1. Server Requirements
-
-- **CPU**: 2+ cores
-- **RAM**: 4GB+
-- **Storage**: 20GB+ SSD
 - **OS**: Ubuntu 20.04+ or CentOS 8+
+- **RAM**: Minimum 4GB, Recommended 8GB+
+- **CPU**: Minimum 2 cores, Recommended 4+ cores
+- **Storage**: Minimum 50GB, Recommended 100GB+ SSD
+- **Network**: Stable internet connection
+
+### Software Requirements
+
 - **Docker**: 20.10+
 - **Docker Compose**: 2.0+
+- **Git**: Latest version
+- **SSL Certificate**: Valid SSL certificate for your domain
 
-### 2. Domain & SSL
+## 🔧 Pre-Deployment Setup
 
-- Registered domain name
-- SSL certificate (Let's Encrypt recommended)
-- DNS configured to point to your server
-
-### 3. Cloud Services
-
-- AWS account with S3 bucket
-- CloudFront distribution
-- PostgreSQL database (RDS or managed service)
-- Redis instance (ElastiCache or managed service)
-
-## Environment Setup
-
-### 1. Create Environment File
+### 1. Server Preparation
 
 ```bash
-cp .env.example .env
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install required packages
+sudo apt install -y curl wget git unzip
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Add user to docker group
+sudo usermod -aG docker $USER
 ```
 
-### 2. Configure Environment Variables
-
-Edit `.env` with your production values:
+### 2. Clone Repository
 
 ```bash
-# Django Configuration
-DJANGO_SECRET_KEY=your-very-secure-secret-key
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+git clone https://github.com/your-org/visionware.git
+cd visionware
+```
 
-# Database Configuration
-DB_NAME=visionware_prod
-DB_USER=visionware_user
-DB_PASSWORD=your-secure-db-password
-DB_HOST=your-db-host
-DB_PORT=5432
+### 3. Environment Configuration
 
-# Redis Configuration
-REDIS_URL=redis://your-redis-host:6379/0
+```bash
+# Copy production environment template
+cp production.env.example .env
 
-# AWS Configuration
+# Edit environment variables
+nano .env
+```
+
+**Required Environment Variables:**
+
+```bash
+# Environment
+ENVIRONMENT=production
+
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/visionware_prod
+
+# Security
+SECRET_KEY=your-super-secure-secret-key-change-this-in-production
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# AWS S3 Configuration
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_STORAGE_BUCKET_NAME=your-s3-bucket
-AWS_S3_REGION_NAME=us-east-1
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=visionware-documents-prod
+USE_IAM_ROLE=true
 
-# CloudFront Configuration
-CLOUDFRONT_DOMAIN=your-cloudfront-domain.cloudfront.net
-CLOUDFRONT_KEY_ID=your-cloudfront-key-id
-CLOUDFRONT_PRIVATE_KEY_PATH=pkcs8.priv
+# ECHO Configuration
+GEMINI_API_KEY=your-gemini-api-key
 
-# CORS Configuration
-CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000
+WORKERS=4
+LOG_LEVEL=INFO
 
-# Email Configuration
+# Redis
+REDIS_PASSWORD=secure_redis_password
+
+# Grafana
+GRAFANA_PASSWORD=admin123
+```
+
+## 🚀 Deployment Steps
+
+### 1. Run Deployment Script
+
+```bash
+# Make script executable
+chmod +x deploy-production.sh
+
+# Run deployment
+./deploy-production.sh
+```
+
+### 2. Manual Deployment (Alternative)
+
+```bash
+# Create production directories
+mkdir -p logs ssl uploads
+
+# Set permissions
+chmod 755 logs ssl uploads
+
+# Build and start services
+docker-compose -f docker-compose.prod.yml build
+docker-compose -f docker-compose.prod.yml up -d
+
+# Wait for services to be ready
+sleep 30
+
+# Run database migrations
+docker-compose -f docker-compose.prod.yml exec backend python -m alembic upgrade head
+
+# Create admin user
+docker-compose -f docker-compose.prod.yml exec backend python -c "
+from database import SessionLocal
+from models import User
+from auth import get_password_hash
+
+db = SessionLocal()
+try:
+    admin = db.query(User).filter(User.username == 'admin').first()
+    if not admin:
+        admin_user = User(
+            username='admin',
+            email='admin@visionware.com',
+            hashed_password=get_password_hash('admin123'),
+            role='super_admin',
+            is_active=True
+        )
+        db.add(admin_user)
+        db.commit()
+        print('Admin user created successfully')
+    else:
+        print('Admin user already exists')
+finally:
+    db.close()
+"
+```
+
+## 🔒 Security Configuration
+
+### 1. SSL Certificate Setup
+
+```bash
+# For Let's Encrypt (recommended)
+sudo apt install certbot
+
+# Get SSL certificate
+sudo certbot certonly --standalone -d your-domain.com
+
+# Copy certificates to project directory
+sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/cert.pem
+sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/key.pem
+
+# Set proper permissions
+sudo chmod 600 ssl/cert.pem ssl/key.pem
+```
+
+### 2. Firewall Configuration
+
+```bash
+# Install UFW
+sudo apt install ufw
+
+# Configure firewall
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow ssh
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+```
+
+### 3. Security Headers
+
+The Nginx configuration includes security headers:
+
+- X-Frame-Options
+- X-Content-Type-Options
+- X-XSS-Protection
+- Referrer-Policy
+- Content-Security-Policy
+- Strict-Transport-Security
+
+## 📊 Monitoring Setup
+
+### 1. Prometheus Configuration
+
+Create `monitoring/prometheus.yml`:
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "visionware-backend"
+    static_configs:
+      - targets: ["backend:8000"]
+    metrics_path: "/metrics"
+
+  - job_name: "visionware-frontend"
+    static_configs:
+      - targets: ["frontend:3000"]
+
+  - job_name: "nginx"
+    static_configs:
+      - targets: ["nginx:80"]
+    metrics_path: "/nginx_status"
+```
+
+### 2. Grafana Dashboards
+
+Create `monitoring/grafana/dashboards/dashboard.json`:
+
+```json
+{
+  "dashboard": {
+    "id": null,
+    "title": "VisionWare Dashboard",
+    "tags": ["visionware"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## 🔧 Post-Deployment Configuration
+
+### 1. Change Default Passwords
+
+```bash
+# Access the application
+# Login with: admin / admin123
+# Change the admin password immediately
+```
+
+### 2. Configure Email Notifications
+
+```bash
+# Add email configuration to .env
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
-DEFAULT_FROM_EMAIL=noreply@yourdomain.com
-
-# Frontend Configuration
-VITE_API_URL=https://yourdomain.com/api
-VITE_WS_URL=wss://yourdomain.com/ws
-
-# Rate Limiting
-RATE_LIMIT_MAX_REQUESTS=1000
-RATE_LIMIT_WINDOW=3600
+DEFAULT_FROM_EMAIL=noreply@your-domain.com
 ```
 
-## AWS Setup
-
-### 1. S3 Bucket Configuration
-
-```bash
-# Create S3 bucket
-aws s3 mb s3://your-visionware-bucket
-
-# Configure bucket policy for CloudFront
-aws s3api put-bucket-policy --bucket your-visionware-bucket --policy '{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowCloudFrontAccess",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "cloudfront.amazonaws.com"
-      },
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::your-visionware-bucket/*",
-      "Condition": {
-        "StringEquals": {
-          "AWS:SourceArn": "arn:aws:cloudfront::your-account-id:distribution/your-distribution-id"
-        }
-      }
-    }
-  ]
-}'
-```
-
-### 2. CloudFront Distribution
-
-1. Create CloudFront distribution
-2. Set origin to your S3 bucket
-3. Configure origin access control
-4. Enable HTTPS only
-5. Set up custom domain with SSL certificate
-
-### 3. IAM User for Application
-
-```bash
-# Create IAM user
-aws iam create-user --user-name visionware-app
-
-# Attach policies
-aws iam attach-user-policy --user-name visionware-app --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
-aws iam attach-user-policy --user-name visionware-app --policy-arn arn:aws:iam::aws:policy/CloudFrontFullAccess
-
-# Create access keys
-aws iam create-access-key --user-name visionware-app
-```
-
-## Database Setup
-
-### PostgreSQL (RDS)
-
-```sql
--- Create database
-CREATE DATABASE visionware_prod;
-
--- Create user
-CREATE USER visionware_user WITH PASSWORD 'your-secure-password';
-
--- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE visionware_prod TO visionware_user;
-```
-
-### Redis (ElastiCache)
-
-1. Create ElastiCache cluster
-2. Configure security groups
-3. Note the endpoint URL
-
-## SSL Certificate Setup
-
-### Using Let's Encrypt
-
-```bash
-# Install Certbot
-sudo apt update
-sudo apt install certbot
-
-# Get certificate
-sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
-
-# Copy certificates to nginx directory
-sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/cert.pem
-sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/key.pem
-```
-
-## Deployment
-
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/your-username/visionware.git
-cd visionware
-```
-
-### 2. Configure Nginx
-
-Update `nginx/nginx.conf` with your domain:
-
-```nginx
-server_name yourdomain.com www.yourdomain.com;
-```
-
-### 3. Run Deployment Script
-
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-### 4. Verify Deployment
-
-```bash
-# Check service status
-docker-compose -f docker-compose.prod.yml ps
-
-# Check logs
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Test endpoints
-curl https://yourdomain.com/health/
-curl https://yourdomain.com/api/
-```
-
-## Post-Deployment
-
-### 1. Security Hardening
-
-```bash
-# Update admin password
-docker-compose -f docker-compose.prod.yml exec backend python manage.py shell
-```
-
-```python
-from django.contrib.auth.models import User
-admin = User.objects.get(username='admin')
-admin.set_password('your-secure-admin-password')
-admin.save()
-```
-
-### 2. Backup Setup
+### 3. Set Up Backup Strategy
 
 ```bash
 # Create backup script
@@ -240,169 +304,162 @@ DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/backups"
 
 # Database backup
-docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U $DB_USER $DB_NAME > $BACKUP_DIR/db_backup_$DATE.sql
+docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U visionware visionware_prod > $BACKUP_DIR/db_backup_$DATE.sql
 
-# Media files backup
-tar -czf $BACKUP_DIR/media_backup_$DATE.tar.gz media/
+# Uploads backup
+tar -czf $BACKUP_DIR/uploads_backup_$DATE.tar.gz uploads/
 
-# Clean old backups (keep 7 days)
+# Keep only last 7 days of backups
 find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
 find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
 EOF
 
 chmod +x backup.sh
 
-# Add to crontab
+# Add to crontab (daily backup at 2 AM)
 echo "0 2 * * * /path/to/visionware/backup.sh" | crontab -
 ```
 
-### 3. Monitoring Setup
+## 📈 Scaling Configuration
+
+### 1. Horizontal Scaling
 
 ```bash
-# Install monitoring tools
-sudo apt install htop iotop nethogs
+# Scale backend workers
+docker-compose -f docker-compose.prod.yml up -d --scale backend=3
 
-# Set up log rotation
-sudo logrotate -f /etc/logrotate.conf
+# Scale celery workers
+docker-compose -f docker-compose.prod.yml up -d --scale celery=2
 ```
 
-### 4. SSL Auto-Renewal
+### 2. Load Balancer Setup
 
-```bash
-# Add to crontab
-echo "0 12 * * * /usr/bin/certbot renew --quiet && docker-compose -f docker-compose.prod.yml restart nginx" | crontab -
-```
+For high-traffic deployments, consider using a load balancer:
 
-## Performance Optimization
-
-### 1. Database Optimization
-
-```sql
--- Add indexes for better performance
-CREATE INDEX idx_notifications_recipient_read ON notifications(recipient_id, is_read);
-CREATE INDEX idx_courses_active ON courses(is_active);
-CREATE INDEX idx_applications_status ON course_applications(status);
-```
-
-### 2. Caching Configuration
-
-```python
-# In production.py
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 50,
-            }
-        },
-        'KEY_PREFIX': 'visionware',
-        'TIMEOUT': 300,
-    }
+```nginx
+# nginx load balancer configuration
+upstream backend_cluster {
+    server backend1:8000;
+    server backend2:8000;
+    server backend3:8000;
 }
 ```
 
-### 3. CDN Configuration
-
-- Configure CloudFront caching rules
-- Set up cache invalidation for content updates
-- Enable compression
-
-## Troubleshooting
+## 🔍 Troubleshooting
 
 ### Common Issues
 
-1. **Database Connection Errors**
+1. **Database Connection Issues**
 
    ```bash
-   # Check database connectivity
-   docker-compose -f docker-compose.prod.yml exec backend python manage.py dbshell
+   # Check database logs
+   docker-compose -f docker-compose.prod.yml logs db
+
+   # Test database connection
+   docker-compose -f docker-compose.prod.yml exec backend python -c "
+   from database import engine
+   from sqlalchemy import text
+   with engine.connect() as conn:
+       result = conn.execute(text('SELECT 1'))
+       print('Database connection successful')
+   "
    ```
 
-2. **Static Files Not Loading**
+2. **SSL Certificate Issues**
 
    ```bash
-   # Recollect static files
-   docker-compose -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput
+   # Check SSL certificate
+   openssl x509 -in ssl/cert.pem -text -noout
+
+   # Test SSL connection
+   curl -I https://your-domain.com
    ```
 
-3. **WebSocket Connection Issues**
+3. **Memory Issues**
 
    ```bash
-   # Check WebSocket logs
-   docker-compose -f docker-compose.prod.yml logs websocket
-   ```
+   # Check container resource usage
+   docker stats
 
-4. **SSL Certificate Issues**
-   ```bash
-   # Test SSL configuration
-   openssl s_client -connect yourdomain.com:443 -servername yourdomain.com
+   # Increase memory limits in docker-compose.prod.yml
    ```
 
 ### Log Analysis
 
 ```bash
-# View application logs
+# View all logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# View specific service logs
 docker-compose -f docker-compose.prod.yml logs -f backend
 
-# View nginx logs
-docker-compose -f docker-compose.prod.yml logs -f nginx
-
-# View database logs
-docker-compose -f docker-compose.prod.yml logs -f db
+# Check error logs
+tail -f logs/nginx/error.log
+tail -f logs/backend/error.log
 ```
 
-## Scaling
+## 🔄 Maintenance
 
-### Horizontal Scaling
-
-```bash
-# Scale backend services
-docker-compose -f docker-compose.prod.yml up -d --scale backend=3 --scale celery=2
-```
-
-### Load Balancer Setup
-
-- Use AWS Application Load Balancer
-- Configure health checks
-- Set up auto-scaling groups
-
-## Maintenance
-
-### Regular Tasks
-
-- Monitor disk space and logs
-- Update dependencies monthly
-- Review security patches
-- Test backup restoration
-- Monitor performance metrics
-
-### Updates
+### 1. Regular Updates
 
 ```bash
-# Pull latest code
+# Update application
 git pull origin main
-
-# Rebuild and restart
-docker-compose -f docker-compose.prod.yml down
 docker-compose -f docker-compose.prod.yml build
 docker-compose -f docker-compose.prod.yml up -d
 
-# Run migrations
-docker-compose -f docker-compose.prod.yml exec backend python manage.py migrate
+# Update SSL certificates (Let's Encrypt)
+sudo certbot renew
+sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/cert.pem
+sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/key.pem
+docker-compose -f docker-compose.prod.yml restart nginx
 ```
 
-## Support
+### 2. Database Maintenance
 
-For issues and questions:
+```bash
+# Run database migrations
+docker-compose -f docker-compose.prod.yml exec backend python -m alembic upgrade head
 
-- Check the logs first
-- Review this deployment guide
-- Create an issue on GitHub
-- Contact the development team
+# Database optimization
+docker-compose -f docker-compose.prod.yml exec db psql -U visionware -d visionware_prod -c "VACUUM ANALYZE;"
+```
+
+### 3. Monitoring Alerts
+
+Set up monitoring alerts for:
+
+- High CPU/Memory usage
+- Database connection failures
+- SSL certificate expiration
+- Disk space usage
+- Application errors
+
+## 📞 Support
+
+For production support:
+
+- **Documentation**: Check this guide and inline code comments
+- **Logs**: Use the logging commands above
+- **Monitoring**: Access Grafana at `https://your-domain.com:3001`
+- **Health Checks**: Visit `https://your-domain.com/health`
+
+## ✅ Deployment Checklist
+
+- [ ] Server prepared with Docker and Docker Compose
+- [ ] Environment variables configured
+- [ ] SSL certificates installed
+- [ ] Firewall configured
+- [ ] Services deployed and running
+- [ ] Database migrations completed
+- [ ] Admin user created
+- [ ] Health checks passing
+- [ ] Monitoring configured
+- [ ] Backup strategy implemented
+- [ ] Default passwords changed
+- [ ] Email notifications configured
+- [ ] Documentation updated
 
 ---
 
-**Remember**: Always test changes in a staging environment before applying to production!
+**🎉 Congratulations! VisionWare is now running in production with enterprise-grade security, monitoring, and scalability.**

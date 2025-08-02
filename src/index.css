@@ -523,4 +523,198 @@ body {
   .animate-shake {
     animation: shake 0.5s ease-in-out;
   }
+
+  /* Chat Interface Styles */
+  .chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .chat-message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .chat-input-container {
+    flex-shrink: 0;
+    border-top: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+
+  /* Ensure scroll area works properly */
+  .chat-scroll-area {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .chat-scroll-area > div {
+    height: 100%;
+  }
+
+  /* Markdown Styling for ECHO */
+  .prose {
+    color: #374151;
+    line-height: 1.6;
+  }
+
+  .prose p {
+    margin-bottom: 0.75rem;
+  }
+
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose strong {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .prose em {
+    font-style: italic;
+    color: #4B5563;
+  }
+
+  .prose code {
+    background-color: #F3F4F6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    color: #1F2937;
+  }
+
+  .prose pre {
+    background-color: #F3F4F6;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+  }
+
+  .prose pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .prose ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin: 0.75rem 0;
+  }
+
+  .prose ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin: 0.75rem 0;
+  }
+
+  .prose li {
+    margin: 0.25rem 0;
+  }
+
+  .prose h1, .prose h2, .prose h3 {
+    font-weight: 600;
+    color: #111827;
+    margin: 1rem 0 0.5rem 0;
+  }
+
+  .prose h1 {
+    font-size: 1.25rem;
+  }
+
+  .prose h2 {
+    font-size: 1.125rem;
+  }
+
+  .prose h3 {
+    font-size: 1rem;
+  }
+
+  .prose blockquote {
+    border-left: 4px solid #E5E7EB;
+    padding-left: 1rem;
+    font-style: italic;
+    color: #6B7280;
+    margin: 0.75rem 0;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+  }
+
+  .prose th {
+    background-color: #F9FAFB;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem;
+    border: 1px solid #E5E7EB;
+  }
+
+  .prose td {
+    padding: 0.5rem;
+    border: 1px solid #E5E7EB;
+  }
+
+  /* User message prose styling */
+  .prose-user {
+    color: white !important;
+  }
+
+  .prose-user p {
+    color: white !important;
+  }
+
+  .prose-user strong {
+    color: white !important;
+  }
+
+  .prose-user em {
+    color: #F3F4F6 !important;
+  }
+
+  .prose-user li {
+    color: white !important;
+  }
+
+  .prose-user h1,
+  .prose-user h2,
+  .prose-user h3 {
+    color: white !important;
+  }
+
+  .prose-user blockquote {
+    color: #F3F4F6 !important;
+    border-left-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .prose-user code {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .prose-user table {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .prose-user th {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .prose-user td {
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
 }

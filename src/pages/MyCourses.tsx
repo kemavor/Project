@@ -27,7 +27,11 @@ import {
   User,
   Mail,
   Star,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  FileText,
+  ClipboardList,
+  RefreshCw
 } from 'lucide-react';
 
 const MyCourses: React.FC = () => {
@@ -46,6 +50,9 @@ const MyCourses: React.FC = () => {
   // State for student applications
   const [myApplications, setMyApplications] = useState<Application[]>([]);
   const [myApplicationsLoading, setMyApplicationsLoading] = useState(false);
+  
+  // State for tracking course enrollment changes
+  const [previousEnrolledCount, setPreviousEnrolledCount] = useState(0);
 
   // Fetch enrolled courses for students
   const fetchEnrolledCourses = async () => {
@@ -58,7 +65,41 @@ const MyCourses: React.FC = () => {
       if (response.error) {
         toast.error(response.error);
       } else {
-        setEnrolledCourses(response.data || []);
+        const newEnrolledCourses = response.data || [];
+        
+        // Debug: Log the response structure
+        console.log('Enrolled courses response:', response);
+        console.log('Enrolled courses data:', newEnrolledCourses);
+        
+        // Handle different data structures - the API might return Course[] or EnrolledCourse[]
+        let processedCourses: EnrolledCourse[] = [];
+        
+        if (newEnrolledCourses.length > 0) {
+          // Check if the first item has a nested 'course' property (EnrolledCourse structure)
+          const firstItem = newEnrolledCourses[0] as any;
+          if (firstItem && firstItem.course) {
+            // It's already in EnrolledCourse format
+            processedCourses = newEnrolledCourses as EnrolledCourse[];
+          } else {
+            // It's in Course format, convert to EnrolledCourse format
+            processedCourses = newEnrolledCourses.map((course: any) => ({
+              id: course.id,
+              course: course,
+              enrolled_at: course.created_at || new Date().toISOString(),
+              enrollment_status: 'enrolled',
+              instructor: null
+            })) as EnrolledCourse[];
+          }
+        }
+        
+        // Check if new courses were enrolled
+        if (processedCourses.length > previousEnrolledCount && previousEnrolledCount > 0) {
+          const newCourses = processedCourses.length - previousEnrolledCount;
+          toast.success(`🎉 You've been approved for ${newCourses} new course${newCourses > 1 ? 's' : ''}!`);
+        }
+        
+        setEnrolledCourses(processedCourses);
+        setPreviousEnrolledCount(processedCourses.length);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to fetch enrolled courses');
@@ -98,7 +139,18 @@ const MyCourses: React.FC = () => {
       if (response.error) {
         toast.error(response.error);
       } else {
-        setMyApplications(response.data || []);
+        const newApplications = response.data || [];
+        
+        // Check for newly approved applications
+        newApplications.forEach((app: Application) => {
+          const existingApp = myApplications.find(existing => existing.id === app.id);
+          if (existingApp && existingApp.status === 'pending' && app.status === 'approved') {
+            const courseTitle = app.course?.title || `Course ${app.course_id}`;
+            toast.success(`🎉 Your application for "${courseTitle}" has been approved!`);
+          }
+        });
+        
+        setMyApplications(newApplications);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to fetch applications');
@@ -168,181 +220,70 @@ const MyCourses: React.FC = () => {
     });
   };
 
-  // Fetch data on component mount
+  // Fetch data on component mount and set up polling for real-time updates
   useEffect(() => {
     if (user?.role === 'teacher') {
-      fetchApplications();
+      // Redirect teachers to the proper teacher courses page
+      navigate('/teacher/courses');
+      return;
     } else if (user?.role === 'student') {
       fetchEnrolledCourses();
       fetchMyApplications();
+      
+      // Set up polling to refresh data every 30 seconds for real-time updates
+      const interval = setInterval(() => {
+        fetchEnrolledCourses();
+        fetchMyApplications();
+      }, 30000); // 30 seconds
+      
+      return () => clearInterval(interval);
     }
-  }, [user?.role]);
+  }, [user?.role, navigate]);
 
+  // If user is a teacher, show a loading state while redirecting
   if (user?.role === 'teacher') {
     return (
       <Layout>
         <div className="p-6 space-y-6">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground mb-1">My Teaching Courses</h1>
-                <p className="text-muted-foreground text-lg">
-                  Manage your courses and review student applications
-                </p>
-              </div>
-            </div>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Redirecting to teacher courses...</p>
           </div>
-
-          {/* Tabs for Teachers */}
-          <Tabs defaultValue="courses" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="courses">My Courses</TabsTrigger>
-              <TabsTrigger value="applications">
-                Applications ({applications.filter(a => a.status === 'pending').length})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Courses Tab */}
-            <TabsContent value="courses" className="space-y-6">
-              <div className="text-center py-12">
-                <GraduationCap className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Course Management</h2>
-                <p className="text-muted-foreground mb-6">Manage your teaching courses and content</p>
-                <Button onClick={() => navigate('/teacher/courses')}>
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Manage My Teaching Courses
-                </Button>
-              </div>
-            </TabsContent>
-
-            {/* Applications Tab */}
-            <TabsContent value="applications" className="space-y-4">
-              {applicationsLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading applications...</p>
-                </div>
-              ) : applications.length === 0 ? (
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center py-12">
-                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No applications yet</h3>
-                      <p className="text-gray-600 mb-4">Student applications will appear here when they apply for your courses</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {applications.map((application) => (
-                    <Card key={application.id} className="hover:shadow-lg transition-all duration-200">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {application.course?.title || `Course ${application.course_id}`}
-                              </CardTitle>
-                              {getStatusBadge(application.status)}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                              <div className="flex items-center gap-1">
-                                <User className="w-4 h-4" />
-                                <span>{application.student?.first_name} {application.student?.last_name}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Mail className="w-4 h-4" />
-                                <span>{application.student?.email}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <GraduationCap className="w-4 h-4" />
-                                <span>Year {application.student_year}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4" />
-                                <span>GPA: {application.gpa}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="mb-4">
-                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Motivation Statement:
-                          </h4>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                            {application.motivation_statement}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          <span>Applied: {formatDate(application.created_at)}</span>
-                          {application.updated_at !== application.created_at && (
-                            <span>Updated: {formatDate(application.updated_at)}</span>
-                          )}
-                        </div>
-                        {application.status === 'pending' && (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleApproveApplication(application.id)}
-                              disabled={processingApplication === application.id}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              {processingApplication === application.id ? (
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
-                              ) : (
-                                <Check className="w-4 h-4 mr-1" />
-                              )}
-                              Approve
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleRejectApplication(application.id)}
-                              disabled={processingApplication === application.id}
-                            >
-                              {processingApplication === application.id ? (
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
-                              ) : (
-                                <X className="w-4 h-4 mr-1" />
-                              )}
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
         </div>
       </Layout>
     );
   }
 
+  // Student view - return the student interface
   return (
     <Layout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
-              <BookOpen className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
+                <BookOpen className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-1">My Courses</h1>
+                <p className="text-muted-foreground text-lg">
+                  Continue your learning journey with your enrolled courses
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">My Courses</h1>
-              <p className="text-muted-foreground text-lg">
-                Continue your learning journey with your enrolled courses
-              </p>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                fetchEnrolledCourses();
+                fetchMyApplications();
+                toast.success('Refreshed course data');
+              }}
+              disabled={enrolledCoursesLoading || myApplicationsLoading}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </div>
 
@@ -387,7 +328,7 @@ const MyCourses: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">3</div>
+              <div className="text-3xl font-bold mb-2">{enrolledCourses.length}</div>
               <p className="text-sm text-muted-foreground">
                 Currently enrolled courses
               </p>
@@ -413,152 +354,126 @@ const MyCourses: React.FC = () => {
             ) : enrolledCourses.length === 0 ? (
               <div className="text-center py-8">
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No enrolled courses yet</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Apply for courses to get started with your learning journey
-                </p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No enrolled courses</h3>
+                <p className="text-gray-600 mb-4">You haven't enrolled in any courses yet</p>
                 <Button onClick={() => navigate('/courses')}>
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Browse Available Courses
+                  Browse Courses
                 </Button>
               </div>
             ) : (
-              enrolledCourses.map((course) => (
-                <div key={course.id} className="asklepios-card p-4 hover:scale-105 transition-all duration-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">{course.title}</h3>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Enrolled
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Instructor: {course.instructor?.first_name} {course.instructor?.last_name}
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Course ID: {course.id}</span>
-                      <span>Credits: {course.credits || 3}</span>
+              <div className="space-y-4">
+                {enrolledCourses.map((enrolledCourse) => {
+                  // Skip courses that don't have proper data
+                  if (!enrolledCourse.course) {
+                    console.warn('Enrolled course missing course data:', enrolledCourse);
+                    return null;
+                  }
+                  
+                  return (
+                    <div key={enrolledCourse.course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {enrolledCourse.course.title || 'Untitled Course'}
+                          </h3>
+                          <p className="text-gray-600 mb-3">{enrolledCourse.course.description || 'No description available'}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <div className="flex items-center gap-1">
+                              <User className="w-4 h-4" />
+                              <span>{enrolledCourse.instructor?.first_name} {enrolledCourse.instructor?.last_name || 'Unknown Instructor'}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>Enrolled {formatDate(enrolledCourse.enrolled_at || enrolledCourse.enrollment_date || new Date().toISOString())}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/courses/${enrolledCourse.course.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Course
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/courses/${enrolledCourse.course.id}/documents`)}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Documents
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Enrolled: {formatDate(course.enrolled_at)}</span>
-                      <span>Status: {course.enrollment_status}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {course.description || 'No description available'}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button size="sm" variant="outline" onClick={() => navigate(`/courses/${course.id}`)}>
-                      <PlayCircle className="h-4 w-4 mr-1" />
-                      View Course
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => navigate(`/courses/${course.id}/documents`)}>
-                      <BookOpen className="h-4 w-4 mr-1" />
-                      Materials
-                    </Button>
-                  </div>
-                </div>
-              ))
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* My Applications - For Students */}
-        {myApplications.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                My Course Applications
-              </CardTitle>
-              <CardDescription>Track the status of your course applications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {myApplicationsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading applications...</p>
-                </div>
-              ) : (
-                myApplications.map((application) => (
-                  <div key={application.id} className="asklepios-card p-4 hover:scale-105 transition-all duration-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold">{application.course?.title || `Course ${application.course_id}`}</h3>
-                      {getStatusBadge(application.status)}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Applied: {formatDate(application.created_at)}</span>
-                        {application.updated_at !== application.created_at && (
-                          <span>Updated: {formatDate(application.updated_at)}</span>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <p><strong>GPA:</strong> {application.gpa}</p>
-                        <p><strong>Year:</strong> {application.student_year}</p>
-                      </div>
-                      <div className="mt-3">
-                        <h4 className="text-sm font-medium mb-2">Motivation Statement:</h4>
-                        <p className="text-sm text-muted-foreground bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                          {application.motivation_statement}
-                        </p>
-                      </div>
-                      {application.status === 'approved' && (
-                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                          <p className="text-sm text-green-700 dark:text-green-300">
-                            <CheckCircle className="w-4 h-4 inline mr-1" />
-                            Congratulations! You've been enrolled in this course. You can now access all course materials.
-                          </p>
+        {/* My Applications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              My Applications
+            </CardTitle>
+            <CardDescription>Track your course applications and their status</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {myApplicationsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading applications...</p>
+              </div>
+            ) : myApplications.length === 0 ? (
+              <div className="text-center py-8">
+                <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No applications</h3>
+                <p className="text-gray-600 mb-4">You haven't applied to any courses yet</p>
+                <Button onClick={() => navigate('/courses')}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Browse Courses
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {myApplications.map((application) => (
+                  <div key={application.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {application.course?.title || `Course ${application.course_id}`}
+                          </h4>
+                          {getStatusBadge(application.status)}
                         </div>
-                      )}
-                      {application.status === 'rejected' && (
-                        <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                          <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                            <AlertCircle className="w-4 h-4 inline mr-1" />
-                            Your application was not approved. You can apply for other courses or contact the instructor for more information.
-                          </p>
+                        <p className="text-gray-600 mb-3">{application.motivation_statement}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            <span>Applied {formatDate(application.created_at)}</span>
+                          </div>
+                          {application.updated_at !== application.created_at && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              <span>Updated {formatDate(application.updated_at)}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recent Activities and Deadlines */}
-        <div className="space-y-6">
-          {/* Recent Activities */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Recent Activities
-              </CardTitle>
-              <CardDescription>Your latest learning activities</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* This section will need to be populated with actual recent activities */}
-              <p className="text-muted-foreground text-center">No recent activities recorded.</p>
-            </CardContent>
-          </Card>
-
-          {/* Upcoming Deadlines */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Upcoming Deadlines
-              </CardTitle>
-              <CardDescription>Stay on top of your assignments and quizzes</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* This section will need to be populated with actual upcoming deadlines */}
-              <p className="text-muted-foreground text-center">No upcoming deadlines.</p>
-            </CardContent>
-          </Card>
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

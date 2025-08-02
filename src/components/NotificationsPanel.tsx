@@ -29,7 +29,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onNotificationU
       if (response.error) {
         console.error('Failed to fetch notifications:', response.error);
       } else {
-        setNotifications(response.data || []);
+        setNotifications(Array.isArray(response.data) ? response.data : []);
       }
     } catch (err) {
       console.error('Error fetching notifications:', err);

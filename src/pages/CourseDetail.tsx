@@ -43,18 +43,34 @@ interface CourseDetail {
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchCourseDetail = async () => {
       if (!courseId) return;
       
+      // Check if user is authenticated
+      if (!user || !isAuthenticated) {
+        if (isMounted) {
+          setError('Please log in to view course details');
+          toast.error('Please log in to view course details');
+          setLoading(false);
+        }
+        return;
+      }
+      
       try {
-        setLoading(true);
+        if (isMounted) {
+          setLoading(true);
+        }
         const response = await apiClient.getCourse(parseInt(courseId));
+        
+        if (!isMounted) return;
         
         if (response.error) {
           setError(response.error);
@@ -63,16 +79,24 @@ const CourseDetail: React.FC = () => {
           setCourse(response.data);
         }
       } catch (err) {
+        if (!isMounted) return;
+        
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch course details';
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchCourseDetail();
-  }, [courseId]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [courseId, user, isAuthenticated]);
 
   if (loading) {
     return (
@@ -93,12 +117,23 @@ const CourseDetail: React.FC = () => {
         <div className="p-6 space-y-6">
           <div className="text-center py-12">
             <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Course not found</h3>
-            <p className="text-muted-foreground mb-4">{error || 'The requested course could not be found.'}</p>
-            <Button onClick={() => navigate('/my-courses')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to My Courses
-            </Button>
+            <h3 className="text-lg font-semibold mb-2">
+              {error?.includes('log in') ? 'Authentication Required' : 'Course not found'}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {error || 'The requested course could not be found.'}
+            </p>
+            {error?.includes('log in') ? (
+              <Button onClick={() => navigate('/login')}>
+                <User className="h-4 w-4 mr-2" />
+                Log In
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/my-courses')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to My Courses
+              </Button>
+            )}
           </div>
         </div>
       </Layout>

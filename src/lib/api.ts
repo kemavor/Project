@@ -95,6 +95,13 @@ class ApiClient {
     // Get JWT token from localStorage
     const token = localStorage.getItem('access_token');
     
+    // Debug logging
+    console.log(`🔐 API Request to: ${endpoint}`);
+    console.log(`🔑 Token available: ${!!token}`);
+    if (token) {
+      console.log(`🔑 Token preview: ${token.substring(0, 20)}...`);
+    }
+    
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -105,6 +112,52 @@ class ApiClient {
 
     try {
       const response = await fetch(url, { ...defaultOptions, ...options });
+      
+      // Debug logging
+      console.log(`📡 Response status: ${response.status}`);
+      
+      // Handle 401 Unauthorized - try token refresh first
+      if (response.status === 401 || response.status === 403) {
+        console.warn('Authentication failed, attempting token refresh...');
+        
+        // Try to refresh the token
+        const refreshResponse = await this.refreshToken();
+        
+        if (refreshResponse.data) {
+          // Token refreshed successfully, retry the original request
+          console.log('Token refreshed successfully, retrying request...');
+          const newToken = localStorage.getItem('access_token');
+          
+          const retryOptions: RequestInit = {
+            ...options,
+            headers: {
+              'Content-Type': 'application/json',
+              ...(newToken && { 'Authorization': `Bearer ${newToken}` }),
+              ...options.headers,
+            },
+          };
+          
+          const retryResponse = await fetch(url, retryOptions);
+          
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            return { data };
+          }
+        }
+        
+        // If refresh failed or retry failed, clear tokens and redirect
+        console.warn('Token refresh failed, clearing tokens and redirecting to login');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        
+        // Redirect to login page
+        window.location.href = '/login';
+        
+        return {
+          error: 'Authentication failed. Please log in again.'
+        };
+      }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -124,23 +177,24 @@ class ApiClient {
 
   // Authentication endpoints
   async login(credentials: LoginCredentials): Promise<ApiResponse<{ user: User; message: string; token: string; refresh: string }>> {
-    const response = await this.request('/api/auth/login', {
+    const response = await this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
     
-    // Store JWT token in localStorage if login is successful
-    if (response.data && typeof response.data === 'object' && 'token' in response.data) {
-      const data = response.data as any;
-      localStorage.setItem('access_token', data.token);
-      if (data.refresh) {
-        localStorage.setItem('refresh_token', data.refresh);
-      }
-    }
-    
-    // Transform FastAPI response format to match expected format
+    // Handle successful login response
     if (response.data && typeof response.data === 'object') {
       const data = response.data as any;
+      
+      // Store JWT token in localStorage if login is successful
+      if (data.token) {
+        localStorage.setItem('access_token', data.token);
+        if (data.refresh) {
+          localStorage.setItem('refresh_token', data.refresh);
+        }
+      }
+      
+      // Transform FastAPI response format to match expected format
       return {
         data: {
           user: data.data?.user || data.user,
@@ -159,13 +213,13 @@ class ApiClient {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     
-    return this.request('/api/auth/logout', {
+    return this.request('/auth/logout', {
       method: 'POST',
     });
   }
 
   async getCurrentUser(): Promise<ApiResponse<User>> {
-    const response = await this.request('/api/auth/user');
+    const response = await this.request('/auth/user');
     
     // The backend returns { success: true, data: userData }
     // We need to extract the user data from the response
@@ -177,42 +231,42 @@ class ApiClient {
   }
 
   async register(userData: RegisterData): Promise<ApiResponse<{ message: string }>> {
-    return this.request('/api/auth/register', {
+    return this.request('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async oauthCallback(data: OAuthCallbackRequest): Promise<ApiResponse<{ user: User; token: string }>> {
-    return this.request('/api/auth/oauth/callback/', {
+    return this.request('/auth/oauth/callback/', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async validateOAuthToken(token: string): Promise<ApiResponse<any>> {
-    return this.request('/api/auth/oauth/validate/', {
+    return this.request('/auth/oauth/validate/', {
       method: 'POST',
       body: JSON.stringify({ token }),
     });
   }
 
   async linkOAuthAccount(data: LinkOAuthAccountRequest): Promise<ApiResponse<any>> {
-    return this.request('/api/auth/oauth/link/', {
+    return this.request('/auth/oauth/link/', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async unlinkOAuthAccount(provider: string): Promise<ApiResponse<any>> {
-    return this.request(`/api/auth/oauth/unlink/${provider}/`, {
+    return this.request(`/auth/oauth/unlink/${provider}/`, {
       method: 'POST',
     });
   }
 
   // Course endpoints
   async getCourses() {
-    const response = await this.request('/api/courses');
+    const response = await this.request('/courses');
     
     // If the API returns an error (like 404), return mock data
     if (response.error) {
@@ -225,7 +279,7 @@ class ApiClient {
             title: "Machine Learning Fundamentals",
             description: "Introduction to machine learning concepts and algorithms",
             year: 2,
-            instructor_id: 1,
+            instructor_id: 8, // Updated to match current teacher user ID
             created_at: "2024-01-15T10:00:00Z",
             updated_at: "2024-01-15T10:00:00Z",
             is_enrollment_open: true,
@@ -247,7 +301,7 @@ class ApiClient {
             title: "Deep Learning with Neural Networks",
             description: "Advanced neural network architectures and training",
             year: 3,
-            instructor_id: 2,
+            instructor_id: 8, // Updated to match current teacher user ID
             created_at: "2024-01-20T10:00:00Z",
             updated_at: "2024-01-20T10:00:00Z",
             is_enrollment_open: true,
@@ -269,7 +323,7 @@ class ApiClient {
             title: "Computer Vision Basics",
             description: "Learn image processing and computer vision techniques",
             year: 2,
-            instructor_id: 1,
+            instructor_id: 8, // Updated to match current teacher user ID
             created_at: "2024-01-25T10:00:00Z",
             updated_at: "2024-01-25T10:00:00Z",
             is_enrollment_open: true,
@@ -291,7 +345,7 @@ class ApiClient {
             title: "Natural Language Processing",
             description: "Understanding and processing human language with AI",
             year: 3,
-            instructor_id: 2,
+            instructor_id: 8, // Updated to match current teacher user ID
             created_at: "2024-01-30T10:00:00Z",
             updated_at: "2024-01-30T10:00:00Z",
             is_enrollment_open: true,
@@ -306,6 +360,28 @@ class ApiClient {
             available_spots: 20,
             prerequisites: "Machine Learning Fundamentals",
             files: []
+          },
+          {
+            id: 5,
+            name: "CENG 415",
+            title: "CENG 415",
+            description: "Engineering in Society",
+            year: 4,
+            instructor_id: 8, // Updated to match current teacher user ID
+            created_at: "2025-07-21T19:31:31Z",
+            updated_at: "2025-07-21T19:31:38Z",
+            is_enrollment_open: true,
+            credits: 3,
+            instructor: "test_teacher",
+            document_filename: "ceng415.pdf",
+            signed_url: null,
+            can_enroll: { can_enroll: true, message: "You can enroll in this course" },
+            current_user_application: null,
+            max_students: 50,
+            enrolled_students_count: 0,
+            available_spots: 50,
+            prerequisites: "Engineering fundamentals",
+            files: []
           }
         ]
       };
@@ -314,7 +390,7 @@ class ApiClient {
   }
 
   // Teacher course management endpoints
-  async getMyCourses(): Promise<ApiResponse<Course[]>> {
+  async getMyCourses(): Promise<ApiResponse<Course[] | EnrolledCourse[]>> {
     // Get current user to determine role
     const currentUser = await this.getCurrentUser();
     if (currentUser.error) {
@@ -328,9 +404,21 @@ class ApiClient {
     
     // Call different endpoints based on user role
     if (user.role === 'teacher') {
-      return this.request<Course[]>('/api/courses/my-courses');
+      // For now, let's use the general courses endpoint and filter on frontend
+      // This is a temporary fix until we add proper my-courses endpoint
+      const allCourses = await this.getCourses();
+      if (allCourses.error) {
+        return allCourses;
+      }
+      
+      // Filter courses for this teacher
+      const teacherCourses = (allCourses.data || []).filter(
+        (course: Course) => course.instructor_id === user.id
+      );
+      
+      return { data: teacherCourses };
     } else if (user.role === 'student') {
-      return this.request<Course[]>('/api/courses/enrolled-courses');
+      return this.request<Course[]>('/courses/enrolled-courses');
     } else {
       return { error: 'Invalid user role' };
     }
@@ -342,7 +430,7 @@ class ApiClient {
     credits: number;
     is_enrollment_open: boolean;
   }) {
-    return this.request('/api/courses', {
+    return this.request('/courses', {
       method: 'POST',
       body: JSON.stringify(courseData),
     });
@@ -354,14 +442,14 @@ class ApiClient {
     credits?: number;
     is_enrollment_open?: boolean;
   }) {
-    return this.request(`/api/courses/${courseId}`, {
+    return this.request(`/courses/${courseId}`, {
       method: 'PUT',
       body: JSON.stringify(courseData),
     });
   }
 
   async deleteCourse(courseId: number) {
-    return this.request(`/api/courses/${courseId}`, {
+    return this.request(`/courses/${courseId}`, {
       method: 'DELETE',
     });
   }
@@ -383,7 +471,7 @@ class ApiClient {
     // Get JWT token from localStorage
     const token = localStorage.getItem('access_token');
     
-    const url = `${this.baseURL}/api/documents/courses/${courseId}/upload`;
+    const url = `${this.baseURL}/documents/courses/${courseId}/upload`;
     
     try {
       const response = await fetch(url, {
@@ -414,11 +502,11 @@ class ApiClient {
   }
 
   async getCourseDocuments(courseId: number): Promise<ApiResponse<any[]>> {
-    return this.request(`/api/documents/courses/${courseId}`);
+    return this.request(`/documents/courses/${courseId}`);
   }
 
   async getDocument(documentId: number): Promise<ApiResponse<any>> {
-    return this.request(`/api/documents/${documentId}`);
+    return this.request(`/documents/${documentId}`);
   }
 
   async updateDocument(
@@ -429,20 +517,20 @@ class ApiClient {
       is_public?: boolean;
     }
   ): Promise<ApiResponse<any>> {
-    return this.request(`/api/documents/${documentId}`, {
+    return this.request(`/documents/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async deleteDocument(documentId: number): Promise<ApiResponse<any>> {
-    return this.request(`/api/documents/${documentId}`, {
+    return this.request(`/documents/${documentId}`, {
       method: 'DELETE',
     });
   }
 
   async getCourse(id: number) {
-    return this.request(`/api/courses/${id}/`);
+    return this.request(`/courses/${id}/`);
   }
 
   async applyForCourse(courseId: number, applicationData: {
@@ -450,76 +538,126 @@ class ApiClient {
     gpa: number;
     motivation_statement: string;
   }) {
-    return this.request(`/api/courses/${courseId}/apply`, {
+    return this.request(`/courses/${courseId}/apply`, {
       method: 'POST',
       body: JSON.stringify(applicationData),
     });
   }
 
   async getMyApplications() {
-    return this.request('/api/courses/my-applications');
+    return this.request('/courses/my-applications');
   }
 
   async getCourseApplications() {
-    return this.request('/api/courses/course-applications');
+    return this.request('/courses/course-applications');
   }
 
   async approveApplication(applicationId: number) {
-    return this.request(`/api/courses/applications/${applicationId}/approve`, {
-      method: 'PUT',
-    });
+    try {
+      console.log(`🎯 Approving application ID: ${applicationId}`);
+      
+      const response = await this.request(`/courses/applications/${applicationId}/approve`, {
+        method: 'PUT',
+      });
+      
+      console.log(`📡 Approval response:`, response);
+      
+      if (response.error) {
+        console.error('Application approval failed:', response.error);
+        return response;
+      }
+      
+      console.log('✅ Application approved successfully');
+      return response;
+    } catch (error) {
+      console.error('Error approving application:', error);
+      return {
+        error: error instanceof Error ? error.message : 'Failed to approve application'
+      };
+    }
   }
 
   async rejectApplication(applicationId: number) {
-    return this.request(`/api/courses/applications/${applicationId}/reject`, {
-      method: 'PUT',
-    });
+    try {
+      console.log(`🎯 Rejecting application ID: ${applicationId}`);
+      
+      const response = await this.request(`/courses/applications/${applicationId}/reject`, {
+        method: 'PUT',
+      });
+      
+      console.log(`📡 Rejection response:`, response);
+      
+      if (response.error) {
+        console.error('Application rejection failed:', response.error);
+        return response;
+      }
+      
+      console.log('✅ Application rejected successfully');
+      return response;
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      return {
+        error: error instanceof Error ? error.message : 'Failed to reject application'
+      };
+    }
   }
 
   // Notification endpoints
   async getNotifications() {
-    return this.request('/api/notifications');
+    // Try the notifications endpoint, but handle 422 errors gracefully
+    try {
+      return this.request('/notifications');
+    } catch (error) {
+      console.warn('Notifications endpoint not available, returning empty array');
+      return { data: [] };
+    }
   }
 
   async getUnreadNotifications() {
-    return this.request('/api/notifications/unread');
+    // Try the unread notifications endpoint, but handle 422 errors gracefully
+    try {
+      return this.request('/notifications/unread');
+    } catch (error) {
+      console.warn('Unread notifications endpoint not available, returning empty array');
+      return { data: [] };
+    }
   }
 
   async markNotificationAsRead(notificationId: number) {
-    return this.request(`/api/notifications/${notificationId}/read`, {
+    return this.request(`/notifications/${notificationId}/read`, {
       method: 'PUT',
     });
   }
 
   async markAllNotificationsAsRead() {
-    return this.request('/api/notifications/read-all', {
+    return this.request('/notifications/read-all', {
       method: 'PUT',
     });
   }
 
   async deleteNotification(notificationId: number) {
-    return this.request(`/api/notifications/${notificationId}`, {
+    return this.request(`/notifications/${notificationId}`, {
       method: 'DELETE',
     });
   }
 
   async getCourseDocumentsForStudents(courseId: number) {
-    return this.request(`/api/courses/${courseId}/documents`);
+    return this.request(`/courses/${courseId}/documents`);
   }
 
 
 
   async getDocumentDownloadUrl(documentId: number) {
-    return this.request(`/api/courses/documents/${documentId}/download`);
+    return this.request(`/courses/documents/${documentId}/download`);
   }
 
   // Application management
   async getApplication(id: number) {
-    return this.request(`/api/applications/${id}/`);
+    return this.request(`/applications/${id}/`);
   }
 
   async updateApplication(id: number, data: any) {
-    return this.request(`/api/applications/${id}/`, {
+    return this.request(`/applications/${id}/`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
@@ -528,7 +666,7 @@ class ApiClient {
   // Lecture management
   async getLectures() {
     try {
-      const response = await this.request('/api/lectures/');
+      const response = await this.request('/lectures/');
       return response;
     } catch (error) {
       // Return mock data if backend endpoint doesn't exist
@@ -570,7 +708,7 @@ class ApiClient {
 
   async getLecture(id: number) {
     try {
-      const response = await this.request(`/api/lectures/${id}`);
+      const response = await this.request(`/lectures/${id}`);
       return response;
     } catch (error) {
       // Return mock data if backend endpoint doesn't exist
@@ -595,47 +733,47 @@ class ApiClient {
   }
 
   async createLecture(lectureData: any) {
-    return this.request('/api/lectures/', {
+    return this.request('/lectures/', {
       method: 'POST',
       body: JSON.stringify(lectureData),
     });
   }
 
   async deleteLecture(id: number) {
-    return this.request(`/api/lectures/${id}/`, {
+    return this.request(`/lectures/${id}/`, {
       method: 'DELETE',
     });
   }
 
   // Teacher management
   async fetchTeachers() {
-    return this.request('/api/teachers/');
+    return this.request('/teachers/');
   }
 
   // User management
   async updateCurrentUser(userData: any) {
-    return this.request('/api/auth/profile/update/', {
+    return this.request('/auth/profile/update/', {
       method: 'PATCH',
       body: JSON.stringify(userData),
     });
   }
 
   async updateUserPreferences(preferences: any) {
-    return this.request('/api/auth/preferences/update/', {
+    return this.request('/auth/preferences/update/', {
       method: 'PATCH',
       body: JSON.stringify(preferences),
     });
   }
 
   async changePassword(passwordData: { old_password: string; new_password: string }) {
-    return this.request('/api/auth/change-password/', {
+    return this.request('/auth/change-password/', {
       method: 'POST',
       body: JSON.stringify(passwordData),
     });
   }
 
   async getUserStats() {
-    const response = await this.request('/api/statistics/user');
+    const response = await this.request('/statistics/user');
     
     // Transform FastAPI response format
     if (response.data) {
@@ -648,7 +786,7 @@ class ApiClient {
   }
 
   async getWeeklyProgress() {
-    const response = await this.request('/api/statistics/weekly-progress');
+    const response = await this.request('/statistics/weekly-progress');
     
     // Transform FastAPI response format
     if (response.data) {
@@ -667,14 +805,14 @@ class ApiClient {
     score?: number;
     completed?: boolean;
   }) {
-    return this.request('/api/statistics/activity', {
+    return this.request('/statistics/activity', {
       method: 'POST',
       body: JSON.stringify(activityData),
     });
   }
 
   async forgotPassword(emailData: { email: string }) {
-    return this.request('/api/auth/forgot-password/', {
+    return this.request('/auth/forgot-password/', {
       method: 'POST',
       body: JSON.stringify(emailData),
     });
@@ -685,7 +823,7 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.request('/api/upload/', {
+    return this.request('/upload/', {
       method: 'POST',
       body: formData,
       headers: {}, // Let browser set content-type for FormData
@@ -694,27 +832,27 @@ class ApiClient {
 
   // Additional API methods for missing functions
   async fetchFlashcards() {
-    return this.request('/api/flashcards/');
+    return this.request('/flashcards/');
   }
 
   async fetchCourseFlashcards(courseId: number) {
-    return this.request(`/api/courses/${courseId}/flashcards/`);
+    return this.request(`/courses/${courseId}/flashcards/`);
   }
 
   async fetchQuizzes() {
-    return this.request('/api/quizzes/');
+    return this.request('/quizzes/');
   }
 
   async fetchCourseQuizzes(courseId: number) {
-    return this.request(`/api/courses/${courseId}/quizzes/`);
+    return this.request(`/courses/${courseId}/quizzes/`);
   }
 
   async fetchSummaries() {
-    return this.request('/api/summaries/');
+    return this.request('/summaries/');
   }
 
   async fetchCourseSummaries(courseId: number) {
-    return this.request(`/api/courses/${courseId}/summaries/`);
+    return this.request(`/courses/${courseId}/summaries/`);
   }
 
   async fetchLectures() {
@@ -722,7 +860,7 @@ class ApiClient {
   }
 
   async fetchCourseLectures(courseId: number) {
-    return this.request(`/api/courses/${courseId}/lectures/`);
+    return this.request(`/courses/${courseId}/lectures/`);
   }
 
   async uploadAvatar(file: File) {
@@ -730,7 +868,7 @@ class ApiClient {
     formData.append('avatar', file);
     
     // Try the main avatar endpoint first
-    const response = await this.request('/api/auth/avatar/', {
+    const response = await this.request('/auth/avatar/', {
       method: 'POST',
       body: formData,
       headers: {}, // Let browser set content-type for FormData
@@ -739,9 +877,9 @@ class ApiClient {
     // If that fails, try alternative endpoints
     if (response.error) {
       const alternativeEndpoints = [
-        '/api/auth/profile/avatar/',
-        '/api/user/avatar/',
-        '/api/profile/avatar/'
+        '/auth/profile/avatar/',
+        '/user/avatar/',
+        '/profile/avatar/'
       ];
       
       for (const endpoint of alternativeEndpoints) {
@@ -764,7 +902,7 @@ class ApiClient {
   }
 
   async deleteAccount(password: string) {
-    return this.request('/api/auth/delete/', {
+    return this.request('/auth/delete/', {
       method: 'POST',
       body: JSON.stringify({ password }),
       headers: { 'Content-Type': 'application/json' },
@@ -807,7 +945,7 @@ class ApiClient {
     is_recording?: boolean;
     quality_settings?: any;
   }) {
-    return this.request('/api/livestream/', {
+    return this.request('/livestream/', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -820,20 +958,21 @@ class ApiClient {
     course_id?: number;
   }) {
     const queryParams = new URLSearchParams();
-    if (params?.skip) queryParams.append('skip', params.skip.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.course_id) queryParams.append('course_id', params.course_id.toString());
     
-    return this.request(`/api/livestream/?${queryParams.toString()}`);
+    if (params?.skip !== undefined) queryParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.course_id !== undefined) queryParams.append('course_id', params.course_id.toString());
+    
+    return this.request(`/livestream/?${queryParams.toString()}`);
   }
 
   async getActiveLiveStreams() {
-    return this.request('/api/livestream/active');
+    return this.request('/livestream/active');
   }
 
   async getLiveStream(streamId: number) {
-    return this.request(`/api/livestream/${streamId}`);
+    return this.request(`/livestream/${streamId}`);
   }
 
   async updateLiveStream(streamId: number, data: {
@@ -845,50 +984,60 @@ class ApiClient {
     is_recording?: boolean;
     quality_settings?: any;
   }) {
-    return this.request(`/api/livestream/${streamId}`, {
+    return this.request(`/livestream/${streamId}`, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 
   async startLiveStream(streamId: number, qualitySettings?: any) {
-    return this.request(`/api/livestream/${streamId}/start`, {
+    return this.request(`/livestream/${streamId}/start`, {
       method: 'POST',
-      body: JSON.stringify({ quality_settings: qualitySettings })
+      body: JSON.stringify({ quality_settings: qualitySettings }),
     });
   }
 
   async stopLiveStream(streamId: number, reason?: string) {
-    return this.request(`/api/livestream/${streamId}/stop`, {
+    console.log('🔐 API Stop Request to:', `/livestream/${streamId}/stop`);
+    console.log('📋 Request body:', { reason });
+    return this.request(`/livestream/${streamId}/stop`, {
       method: 'POST',
-      body: JSON.stringify({ reason })
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async deleteLiveStream(streamId: number) {
+    console.log('🔐 API Delete Request to:', `/livestream/${streamId}`);
+    return this.request(`/livestream/${streamId}`, {
+      method: 'DELETE',
     });
   }
 
   async joinLiveStream(streamId: number) {
-    return this.request(`/api/livestream/${streamId}/join`, {
+    return this.request(`/livestream/${streamId}/join`, {
       method: 'POST',
-      body: JSON.stringify({ stream_id: streamId, user_id: 0 }) // user_id will be set by backend
     });
   }
 
   async leaveLiveStream(streamId: number) {
-    return this.request(`/api/livestream/${streamId}/leave`, {
+    return this.request(`/livestream/${streamId}/leave`, {
       method: 'POST',
-      body: JSON.stringify({ stream_id: streamId, user_id: 0 }) // user_id will be set by backend
     });
   }
 
   async getStreamStats(streamId: number) {
-    return this.request(`/api/livestream/${streamId}/stats`);
+    return this.request(`/livestream/${streamId}/stats`);
   }
 
   async sendStreamChatMessage(streamId: number, message: string, messageType: string = 'text') {
-    return this.request(`/api/livestream/${streamId}/chat`, {
+    return this.request(`/livestream/${streamId}/chat`, {
       method: 'POST',
       body: JSON.stringify({
         message,
-        message_type: messageType
+        message_type: messageType,
       }),
     });
   }
@@ -898,40 +1047,34 @@ class ApiClient {
     if (skip !== undefined) params.append('skip', skip.toString());
     if (limit !== undefined) params.append('limit', limit.toString());
     
-    return this.request(`/api/livestream/${streamId}/chat?${params.toString()}`);
+    return this.request(`/livestream/${streamId}/chat?${params.toString()}`);
   }
 
   async askQuestion(streamId: number, question: string) {
-    return this.request(`/api/livestream/${streamId}/questions`, {
+    return this.request(`/livestream/${streamId}/questions`, {
       method: 'POST',
-      body: JSON.stringify({
-        stream_id: streamId,
-        question
-      })
+      body: JSON.stringify({ question }),
     });
   }
 
   async getQuestions(streamId: number, skip?: number, limit?: number) {
     const queryParams = new URLSearchParams();
-    if (skip) queryParams.append('skip', skip.toString());
-    if (limit) queryParams.append('limit', limit.toString());
+    if (skip !== undefined) queryParams.append('skip', skip.toString());
+    if (limit !== undefined) queryParams.append('limit', limit.toString());
     
-    return this.request(`/api/livestream/${streamId}/questions?${queryParams.toString()}`);
+    return this.request(`/livestream/${streamId}/questions?${queryParams.toString()}`);
   }
 
   async upvoteQuestion(streamId: number, questionId: number) {
-    return this.request(`/api/livestream/${streamId}/questions/${questionId}/upvote`, {
-      method: 'POST'
+    return this.request(`/livestream/${streamId}/questions/${questionId}/upvote`, {
+      method: 'POST',
     });
   }
 
   async answerQuestion(streamId: number, questionId: number, answer: string) {
-    return this.request(`/api/livestream/${streamId}/questions/${questionId}/answer`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        is_answered: true,
-        answer
-      })
+    return this.request(`/livestream/${streamId}/questions/${questionId}/answer`, {
+      method: 'POST',
+      body: JSON.stringify({ answer }),
     });
   }
 
@@ -940,18 +1083,18 @@ class ApiClient {
     course_id?: number;
     session_name?: string;
   }) {
-    return this.request('/api/chatbot/sessions', {
+    return this.request('/chatbot/sessions', {
       method: 'POST',
       body: JSON.stringify(sessionData),
     });
   }
 
   async getChatSessions() {
-    return this.request('/api/chatbot/sessions');
+    return this.request('/chatbot/sessions');
   }
 
   async getChatMessages(sessionId: number) {
-    return this.request(`/api/chatbot/sessions/${sessionId}/messages`);
+    return this.request(`/chatbot/sessions/${sessionId}/messages`);
   }
 
   async sendChatMessage(request: {
@@ -960,45 +1103,147 @@ class ApiClient {
     course_id?: number;
     include_course_content?: boolean;
   }) {
-    return this.request('/api/chatbot/chat', {
+    return this.request('/chatbot/chat', {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
-  async analyzeCourseContent(courseId: number) {
-    return this.request('/api/chatbot/analyze-course', {
+  async sendChatMessageWithFiles(request: {
+    session_id: number;
+    message: string;
+    course_id?: number;
+    files: File[];
+  }) {
+    const formData = new FormData();
+    formData.append('session_id', request.session_id.toString());
+    formData.append('message', request.message);
+    
+    if (request.course_id) {
+      formData.append('course_id', request.course_id.toString());
+    }
+    
+    // Add files to form data
+    request.files.forEach((file, index) => {
+      formData.append(`files`, file);
+    });
+
+    const token = localStorage.getItem('access_token');
+    
+    const response = await fetch(`${this.baseURL}/chatbot/chat-with-files`, {
       method: 'POST',
-      body: JSON.stringify({ course_id: courseId }),
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        error: errorData.error || errorData.detail || `HTTP ${response.status}: ${response.statusText}`
+      };
+    }
+
+    const data = await response.json();
+    return { data };
+  }
+
+  async analyzeCourseContent(courseId: number) {
+    return this.request(`/chatbot/analyze-course/${courseId}`, {
+      method: 'POST',
     });
   }
 
   async deleteChatSession(sessionId: number) {
-    return this.request(`/api/chatbot/sessions/${sessionId}`, {
+    return this.request(`/chatbot/sessions/${sessionId}`, {
       method: 'DELETE',
     });
   }
 
   // Notification Preferences
   async getNotificationPreferences(): Promise<ApiResponse<any>> {
-    return this.request('/api/notifications/preferences');
+    return this.request('/notifications/preferences');
   }
 
   async updateNotificationPreferences(preferences: any): Promise<ApiResponse<any>> {
-    return this.request('/api/notifications/preferences', {
+    return this.request('/notifications/preferences', {
       method: 'PUT',
       body: JSON.stringify(preferences),
     });
   }
 
   async resetNotificationPreferences(): Promise<ApiResponse<any>> {
-    return this.request('/api/notifications/preferences/reset', {
+    return this.request('/notifications/preferences/reset', {
       method: 'POST',
     });
   }
+
+  async refreshToken(): Promise<ApiResponse<{ token: string; refresh: string }>> {
+    const refreshToken = localStorage.getItem('refresh_token');
+    
+    if (!refreshToken) {
+      return { error: 'No refresh token available' };
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        // Refresh failed, clear tokens
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        return { error: 'Token refresh failed' };
+      }
+
+      const data = await response.json();
+      
+      // Store new tokens
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+      }
+      if (data.refresh_token) {
+        localStorage.setItem('refresh_token', data.refresh_token);
+      }
+
+      return { data: { token: data.access_token, refresh: data.refresh_token } };
+    } catch (error) {
+      return { error: 'Token refresh failed' };
+    }
+  }
 }
 
-export const apiClient = new ApiClient(API_BASE_URL);
+// Environment-based configuration
+const getApiBaseUrl = (): string => {
+  // Check for environment variables first (production)
+  if (typeof window !== 'undefined') {
+    // Browser environment
+    const protocol = window.location.protocol;
+    const host = window.location.host;
+    
+    // If we're on a production domain, use the same domain for API
+    if (host !== 'localhost:5173' && host !== '127.0.0.1:5173') {
+      return `${protocol}//${host}/api`;
+    }
+  }
+  
+  // Development environment
+  return 'http://localhost:8000/api';
+};
+
+// Create API client instance with environment-aware base URL
+const apiClient = new ApiClient(getApiBaseUrl());
+
+// Export apiClient and api for backwards compatibility
+export const api = apiClient;
+export { apiClient };
 
 // Export individual functions for convenience
 export const {
@@ -1036,17 +1281,17 @@ export const {
 } = apiClient;
 
 export async function fetchUserStats(userId: number) {
-  return apiClient.request(`/api/user/${userId}/stats/`);
+  return apiClient.request(`/user/${userId}/stats/`);
 }
 
 export async function updateUserStats(userId: number) {
-  return apiClient.request(`/api/user/${userId}/stats/`, {
+  return apiClient.request(`/user/${userId}/stats/`, {
     method: 'PUT',
   });
 }
 
 export async function fetchWeeklyLearningHours(userId: number) {
-  return apiClient.request(`/api/user/${userId}/weekly-learning-hours/`);
+  return apiClient.request(`/user/${userId}/weekly-learning-hours/`);
 }
 
 // Export types
@@ -1155,6 +1400,3 @@ export interface Transcription {
   timestamp: number;
   confidence: number;
 }
-
-// Export apiClient as api for backwards compatibility
-export const api = apiClient;

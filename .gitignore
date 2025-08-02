@@ -1,27 +1,118 @@
-# Logs
-logs
-*.log
+# Dependencies
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
+# Production builds
+dist/
+build/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# API Keys and sensitive data
+.env.production
+.env.staging
+secrets/
+keys/
+*.key
+*.pem
+*.p12
+*.pfx
+pkcs8.priv
+pkcs8.pub
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+visionware.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
 dist
-dist-ssr
-*.local
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Python
 __pycache__/
@@ -29,29 +120,124 @@ __pycache__/
 *$py.class
 *.so
 .Python
-.env
-.venv/
+env/
 venv/
 ENV/
 env.bak/
 venv.bak/
-*.sqlite3
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
 db.sqlite3
 
-# Django
-*.log
-*.pot
-*.pyc
-local_settings.py
-media/
+# Flask stuff:
+instance/
+.webassets-cache
 
-# Ignore environment and key files
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
 .env
-*.pem
-*.priv
-*.key
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Test files with API keys
-test_s3_content.py
-test_gemini_models.py
-test_s3_content_safe.py
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# AWS
+.aws/
+aws-credentials.json
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Documentation builds
+docs/build/
+docs/_build/
+
+# IDE specific files
+.vscode/settings.json
+.idea/workspace.xml
+*.sublime-project
+*.sublime-workspace
+
+# Local development files
+local/
+dev/
+development/
+
+# Security files
+secrets.json
+config.json
+credentials.json

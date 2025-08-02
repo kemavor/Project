@@ -12,7 +12,7 @@ from sqlalchemy import func
 from schemas import EnrolledCourseResponse, UserResponse
 from services.notification_service import NotificationService
 
-router = APIRouter(tags=["courses"])
+router = APIRouter(prefix="/courses", tags=["courses"])
 
 
 def generate_presigned_url(bucket_name: str, object_key: str, expiration: int = 3600) -> str:
@@ -476,15 +476,20 @@ async def get_document_download_url(
                     detail="You don't have access to this document"
                 )
 
-        # Generate pre-signed URL
-        presigned_url = generate_presigned_url(
-            document.s3_bucket, document.s3_key, expiration=3600)
+        # Generate pre-signed URL or local file URL
+        if document.s3_url and document.s3_url.startswith('http'):
+            # S3 file - generate pre-signed URL
+            presigned_url = generate_presigned_url(
+                document.s3_bucket, document.s3_key, expiration=3600)
 
-        if not presigned_url:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to generate download URL"
-            )
+            if not presigned_url:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to generate download URL"
+                )
+        else:
+            # Local file - create direct URL
+            presigned_url = f"http://localhost:8000{document.s3_url}"
 
         return {
             "download_url": presigned_url,
@@ -730,6 +735,11 @@ async def get_course(
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch course: {str(e)}"
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch course: {str(e)}"

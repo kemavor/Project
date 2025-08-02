@@ -6,6 +6,7 @@ import boto3
 import os
 import uuid
 import mimetypes
+from pathlib import Path
 from botocore.exceptions import ClientError
 
 from database import get_db
@@ -21,17 +22,26 @@ router = APIRouter(tags=["documents"])
 
 def get_s3_client():
     """Get S3 client using IAM role (EC2) or access keys (local development)"""
-    if settings.use_iam_role:
-        # Use IAM role attached to EC2 instance (recommended for production)
-        return boto3.client('s3', region_name=settings.aws_region)
-    else:
-        # Use access keys (for local development only)
-        return boto3.client(
-            's3',
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-            region_name=settings.aws_region
-        )
+    try:
+        if settings.use_iam_role:
+            # Use IAM role attached to EC2 instance (recommended for production)
+            return boto3.client('s3', region_name=settings.aws_region)
+        elif settings.aws_access_key_id and settings.aws_secret_access_key:
+            # Use access keys (for local development only)
+            return boto3.client(
+                's3',
+                aws_access_key_id=settings.aws_access_key_id,
+                aws_secret_access_key=settings.aws_secret_access_key,
+                region_name=settings.aws_region
+            )
+        else:
+            # No credentials configured - return None for fallback handling
+            print(
+                "⚠️  AWS credentials not configured. S3 operations will use local storage fallback.")
+            return None
+    except Exception as e:
+        print(f"❌ Error creating S3 client: {e}")
+        return None
 
 
 # Initialize S3 client
@@ -52,6 +62,12 @@ def get_mime_type(filename: str) -> str:
 def upload_to_s3(file_content: bytes, s3_key: str, content_type: str) -> str:
     """Upload file to S3 and return the S3 URL"""
     try:
+        # Check if S3 client is available
+        if s3_client is None:
+            print("📁 S3 not configured, using local storage")
+            return upload_to_local_storage(file_content, s3_key, content_type)
+
+        # Try S3 upload
         s3_client.put_object(
             Bucket=settings.s3_bucket_name,
             Key=s3_key,
@@ -62,15 +78,49 @@ def upload_to_s3(file_content: bytes, s3_key: str, content_type: str) -> str:
 
         # Generate S3 URL
         s3_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_region}.amazonaws.com/{s3_key}"
+        print(f"✅ File uploaded to S3: {s3_url}")
         return s3_url
     except ClientError as e:
+        print(f"❌ S3 upload failed: {e}")
+        print("📁 Falling back to local storage")
+        return upload_to_local_storage(file_content, s3_key, content_type)
+    except Exception as e:
+        print(f"❌ Unexpected error in S3 upload: {e}")
+        print("📁 Falling back to local storage")
+        return upload_to_local_storage(file_content, s3_key, content_type)
+
+
+def upload_to_local_storage(file_content: bytes, s3_key: str, content_type: str) -> str:
+    """Upload file to local storage for development"""
+    try:
+        # Create local storage directory
+        local_storage_path = Path("./local_course_content")
+        local_storage_path.mkdir(exist_ok=True)
+
+        # Create course directory
+        course_id = s3_key.split(
+            '/')[1] if len(s3_key.split('/')) > 1 else 'unknown'
+        course_path = local_storage_path / course_id
+        course_path.mkdir(exist_ok=True)
+
+        # Save file locally
+        filename = s3_key.split('/')[-1]
+        file_path = course_path / filename
+
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+
+        # Return local file URL (for development)
+        local_url = f"/local-files/{course_id}/{filename}"
+        return local_url
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload file to S3: {str(e)}"
+            detail=f"Failed to save file locally: {str(e)}"
         )
 
 
-@router.post("/courses/{course_id}/upload", response_model=DocumentUploadResponse)
+@router.post("/upload/{course_id}", response_model=DocumentUploadResponse)
 async def upload_course_document(
     course_id: int,
     file: UploadFile = File(...),
@@ -198,7 +248,7 @@ async def get_course_documents(
     return [CourseDocumentResponse.from_orm(doc) for doc in documents]
 
 
-@router.get("/{document_id}", response_model=CourseDocumentResponse)
+@router.get("/document/{document_id}", response_model=CourseDocumentResponse)
 async def get_document(
     document_id: int,
     current_user: User = Depends(get_current_user),
@@ -235,7 +285,7 @@ async def get_document(
     return CourseDocumentResponse.from_orm(document)
 
 
-@router.delete("/{document_id}")
+@router.delete("/document/{document_id}")
 async def delete_document(
     document_id: int,
     current_user: User = Depends(get_current_user),
@@ -280,7 +330,7 @@ async def delete_document(
         )
 
 
-@router.put("/{document_id}", response_model=CourseDocumentResponse)
+@router.put("/document/{document_id}", response_model=CourseDocumentResponse)
 async def update_document(
     document_id: int,
     title: Optional[str] = None,
@@ -291,24 +341,26 @@ async def update_document(
 ):
     """Update document metadata (teachers only)"""
 
-    document = db.query(CourseDocument).filter(
-        CourseDocument.id == document_id).first()
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Document not found"
-        )
-
-    # Check if user is the course instructor
-    course = db.query(Course).filter(Course.id == document.course_id).first()
-    if not course or course.instructor_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the course instructor can update documents"
-        )
-
     try:
-        # Update fields
+        document = db.query(CourseDocument).filter(
+            CourseDocument.id == document_id).first()
+
+        if not document:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found"
+            )
+
+        # Check if user is the course instructor
+        course = db.query(Course).filter(
+            Course.id == document.course_id).first()
+        if not course or course.instructor_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only update documents for your own courses"
+            )
+
+        # Update document fields
         if title is not None:
             document.title = title
         if description is not None:

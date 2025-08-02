@@ -33,10 +33,15 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  Image
+  Image,
+  Video,
+  Play,
+  Monitor,
+  Wifi
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { apiClient } from '@/lib/api'
+import { useNavigate } from 'react-router-dom'
 
 // Import default profile images
 import defaultImage1 from '../Images/1.jpeg'
@@ -45,6 +50,7 @@ import defaultImage3 from '../Images/3.jpeg'
 
 const Settings = () => {
   const { user, updateUser, updatePreferences, changePassword, logout } = useAuth()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
   const [userStats, setUserStats] = useState<any>(null)
@@ -281,9 +287,12 @@ const Settings = () => {
 
           {/* Settings Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-4 w-full max-w-md">
+            <TabsList className="grid grid-cols-5 w-full max-w-md">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="preferences">Preferences</TabsTrigger>
+              {user?.role === 'teacher' && (
+                <TabsTrigger value="streaming">Streaming</TabsTrigger>
+              )}
               <TabsTrigger value="security">Security</TabsTrigger>
               <TabsTrigger value="account">Account</TabsTrigger>
             </TabsList>
@@ -726,6 +735,140 @@ const Settings = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Streaming Tab - Teachers Only */}
+            {user?.role === 'teacher' && activeTab === 'streaming' && (
+              <TabsContent value="streaming" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Video className="h-5 w-5" />
+                      Streaming Management
+                    </CardTitle>
+                    <CardDescription>
+                      Manage your live streaming settings and configurations
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Streaming Setup */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">Streaming Architecture</div>
+                          <div className="text-sm text-gray-500">Choose your preferred streaming method</div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/streaming-setup')}
+                        >
+                          <SettingsIcon />
+                          Configure
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">Create Live Stream</div>
+                          <div className="text-sm text-gray-500">Start a new live streaming session</div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/livestream/create')}
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Create Stream
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <div className="font-medium">View My Streams</div>
+                          <div className="text-sm text-gray-500">Manage your existing live streams</div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/livestream')}
+                        >
+                          <Monitor className="h-4 w-4 mr-2" />
+                          View Streams
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Streaming Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium">Streaming Options</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 border rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Monitor className="h-4 w-4 text-blue-500" />
+                            <span className="font-medium">Browser-Based Streaming</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Stream directly from your browser using camera and microphone
+                          </p>
+                          <div className="space-y-1 text-xs text-gray-500">
+                            <div>✅ No additional software needed</div>
+                            <div>✅ Quick setup (2-5 minutes)</div>
+                            <div>✅ Built-in chat integration</div>
+                            <div>❌ Limited to browser capabilities</div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 border rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Video className="h-4 w-4 text-purple-500" />
+                            <span className="font-medium">Professional Broadcasting</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-3">
+                            Use OBS Studio for professional-quality streaming
+                          </p>
+                          <div className="space-y-1 text-xs text-gray-500">
+                            <div>✅ High-quality video (up to 4K)</div>
+                            <div>✅ Multiple video sources</div>
+                            <div>✅ Advanced overlays and graphics</div>
+                            <div>❌ Requires OBS Studio installation</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Quick Actions */}
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium">Quick Actions</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/streaming-guide/mediasoup')}
+                          className="justify-start"
+                        >
+                          <Wifi />
+                          Browser Setup Guide
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/streaming-guide/rtmp')}
+                          className="justify-start"
+                        >
+                          <Video />
+                          OBS Setup Guide
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
 
             {/* Account Tab */}
             <TabsContent value="account" className="space-y-6">

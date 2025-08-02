@@ -137,14 +137,20 @@ const TeacherCourses: React.FC = () => {
   const fetchApplications = async () => {
     try {
       setApplicationsLoading(true);
+      console.log('🔄 Fetching course applications...');
+      
       const response = await apiClient.getCourseApplications();
+      console.log('📡 Applications response:', response);
       
       if (response.error) {
+        console.error('❌ Applications fetch error:', response.error);
         toast.error(response.error);
       } else {
+        console.log('✅ Applications fetched successfully:', response.data);
         setApplications(response.data || []);
       }
     } catch (err) {
+      console.error('❌ Applications fetch exception:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to fetch applications');
     } finally {
       setApplicationsLoading(false);

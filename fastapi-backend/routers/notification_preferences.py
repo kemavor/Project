@@ -8,7 +8,8 @@ from schemas import NotificationPreferencesUpdate, NotificationPreferencesRespon
 from services.notification_service import NotificationService
 from sqlalchemy import func
 
-router = APIRouter()
+router = APIRouter(tags=["notification_preferences"])
+
 
 @router.get("/preferences", response_model=NotificationPreferencesResponse)
 async def get_notification_preferences(
@@ -17,11 +18,12 @@ async def get_notification_preferences(
 ):
     """Get user's notification preferences"""
     preferences = NotificationService.get_user_preferences(db, current_user.id)
-    
+
     if not preferences:
         # Create default preferences if none exist
-        preferences = NotificationService.create_default_preferences(db, current_user.id)
-    
+        preferences = NotificationService.create_default_preferences(
+            db, current_user.id)
+
     return NotificationPreferencesResponse(
         id=preferences.id,
         user_id=preferences.user_id,
@@ -47,6 +49,7 @@ async def get_notification_preferences(
         updated_at=preferences.updated_at
     )
 
+
 @router.put("/preferences", response_model=NotificationPreferencesResponse)
 async def update_notification_preferences(
     preferences_data: NotificationPreferencesUpdate,
@@ -55,11 +58,12 @@ async def update_notification_preferences(
 ):
     """Update user's notification preferences"""
     preferences = NotificationService.get_user_preferences(db, current_user.id)
-    
+
     if not preferences:
         # Create default preferences if none exist
-        preferences = NotificationService.create_default_preferences(db, current_user.id)
-    
+        preferences = NotificationService.create_default_preferences(
+            db, current_user.id)
+
     # Update fields if provided
     if preferences_data.course_notifications is not None:
         preferences.course_notifications = preferences_data.course_notifications
@@ -73,7 +77,7 @@ async def update_notification_preferences(
         preferences.system_notifications = preferences_data.system_notifications
     if preferences_data.achievement_notifications is not None:
         preferences.achievement_notifications = preferences_data.achievement_notifications
-    
+
     if preferences_data.low_priority is not None:
         preferences.low_priority = preferences_data.low_priority
     if preferences_data.normal_priority is not None:
@@ -82,31 +86,31 @@ async def update_notification_preferences(
         preferences.high_priority = preferences_data.high_priority
     if preferences_data.urgent_priority is not None:
         preferences.urgent_priority = preferences_data.urgent_priority
-    
+
     if preferences_data.email_notifications is not None:
         preferences.email_notifications = preferences_data.email_notifications
     if preferences_data.push_notifications is not None:
         preferences.push_notifications = preferences_data.push_notifications
     if preferences_data.in_app_notifications is not None:
         preferences.in_app_notifications = preferences_data.in_app_notifications
-    
+
     if preferences_data.notification_frequency is not None:
         preferences.notification_frequency = preferences_data.notification_frequency
     if preferences_data.enrolled_courses_only is not None:
         preferences.enrolled_courses_only = preferences_data.enrolled_courses_only
     if preferences_data.instructor_courses_only is not None:
         preferences.instructor_courses_only = preferences_data.instructor_courses_only
-    
+
     if preferences_data.quiet_hours_start is not None:
         preferences.quiet_hours_start = preferences_data.quiet_hours_start
     if preferences_data.quiet_hours_end is not None:
         preferences.quiet_hours_end = preferences_data.quiet_hours_end
-    
+
     preferences.updated_at = func.now()
-    
+
     db.commit()
     db.refresh(preferences)
-    
+
     return NotificationPreferencesResponse(
         id=preferences.id,
         user_id=preferences.user_id,
@@ -132,6 +136,7 @@ async def update_notification_preferences(
         updated_at=preferences.updated_at
     )
 
+
 @router.post("/preferences/reset")
 async def reset_notification_preferences(
     current_user: User = Depends(get_current_user),
@@ -139,15 +144,17 @@ async def reset_notification_preferences(
 ):
     """Reset user's notification preferences to defaults"""
     # Delete existing preferences
-    existing_preferences = NotificationService.get_user_preferences(db, current_user.id)
+    existing_preferences = NotificationService.get_user_preferences(
+        db, current_user.id)
     if existing_preferences:
         db.delete(existing_preferences)
         db.commit()
-    
+
     # Create new default preferences
-    preferences = NotificationService.create_default_preferences(db, current_user.id)
-    
+    preferences = NotificationService.create_default_preferences(
+        db, current_user.id)
+
     return {
         "success": True,
         "message": "Notification preferences reset to defaults"
-    } 
+    }

@@ -53,56 +53,91 @@ const StudentCourseDocuments: React.FC = () => {
   const [downloading, setDownloading] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    fetchCoursesWithDocuments();
-  }, []);
+    let isMounted = true;
+    
+    const fetchCoursesWithDocuments = async () => {
+      try {
+        if (isMounted) {
+          setLoading(true);
+        }
+        
+        // Check if user is authenticated
+        if (!user) {
+          if (isMounted) {
+            setError('Please log in to view course documents');
+          }
+          return;
+        }
+        
+        // Get all courses
+        const coursesResponse = await apiClient.getCourses();
+        
+        if (!isMounted) return;
+        
+        if (coursesResponse.error) {
+          setError(coursesResponse.error);
+          return;
+        }
 
-  const fetchCoursesWithDocuments = async () => {
-    try {
-      setLoading(true);
-      
-      // Get all courses
-      const coursesResponse = await apiClient.getCourses();
-      
-      if (coursesResponse.error) {
-        setError(coursesResponse.error);
-        return;
-      }
-
-      const coursesData = (coursesResponse.data as any[]) || [];
-      
-      // Fetch documents for each course
-      const coursesWithDocs: CourseWithDocuments[] = [];
-      
-      for (const course of coursesData) {
-        try {
-          const docsResponse = await apiClient.getCourseDocumentsForStudents(course.id);
-          if (!docsResponse.error) {
-            coursesWithDocs.push({
-              ...course,
-              documents: (docsResponse.data as CourseDocument[]) || []
-            });
-          } else {
+        const coursesData = (coursesResponse.data as any[]) || [];
+        
+        // Fetch documents for each course
+        const coursesWithDocs: CourseWithDocuments[] = [];
+        
+        for (const course of coursesData) {
+          try {
+            const docsResponse = await apiClient.getCourseDocumentsForStudents(course.id);
+            if (!isMounted) return;
+            
+            console.log(`Course ${course.id} documents response:`, docsResponse);
+            
+            if (!docsResponse.error) {
+              // The backend returns a list directly, not wrapped in data
+              const documents = Array.isArray(docsResponse.data) ? docsResponse.data : [];
+              console.log(`Course ${course.id} has ${documents.length} documents:`, documents);
+              coursesWithDocs.push({
+                ...course,
+                documents: documents as CourseDocument[]
+              });
+            } else {
+              console.log(`Course ${course.id} documents error:`, docsResponse.error);
+              coursesWithDocs.push({
+                ...course,
+                documents: []
+              });
+            }
+          } catch (err) {
+            if (!isMounted) return;
+            console.error(`Failed to fetch documents for course ${course.id}:`, err);
             coursesWithDocs.push({
               ...course,
               documents: []
             });
           }
-        } catch (err) {
-          console.error(`Failed to fetch documents for course ${course.id}:`, err);
-          coursesWithDocs.push({
-            ...course,
-            documents: []
-          });
+        }
+        
+        if (isMounted) {
+          setCourses(coursesWithDocs);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch courses');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
-      
-      setCourses(coursesWithDocs);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch courses');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchCoursesWithDocuments();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+
 
   const handleDownload = async (doc: CourseDocument) => {
     try {
@@ -218,7 +253,7 @@ const StudentCourseDocuments: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={fetchCoursesWithDocuments}>Try Again</Button>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
           </div>
         </div>
       </Layout>

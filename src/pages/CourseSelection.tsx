@@ -206,11 +206,11 @@ const CourseSelection: React.FC = () => {
     return (
       <Layout>
         <div className="p-6 space-y-6">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={fetchCoursesByYear}>Try Again</Button>
-          </div>
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={fetchCoursesByYear}>Try Again</Button>
         </div>
+      </div>
       </Layout>
     );
   }
@@ -223,15 +223,15 @@ const CourseSelection: React.FC = () => {
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-blue-500 rounded-2xl">
               <BookOpen className="h-8 w-8 text-white" />
-            </div>
+                </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-1">Course Selection</h1>
               <p className="text-muted-foreground text-lg">
                 Browse and apply for available courses
               </p>
             </div>
+            </div>
           </div>
-        </div>
 
         {/* Search and Filters */}
         <Card>
@@ -243,22 +243,22 @@ const CourseSelection: React.FC = () => {
             <CardDescription>Find courses that match your interests and requirements</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Search Bar */}
+              {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative">
               <div className="flex gap-4">
-                <div className="flex-1 relative">
+                  <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="text"
+                    <Input
+                      type="text"
                     placeholder="Search courses by name, description, or instructor..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-10"
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  />
+                    />
                   {searchTerm && (
-                    <Button
+                  <Button 
                       type="button"
                       variant="ghost"
                       size="sm"
@@ -270,8 +270,8 @@ const CourseSelection: React.FC = () => {
                   )}
                 </div>
                 <Button type="submit">
-                  Search
-                </Button>
+                    Search
+                  </Button>
               </div>
 
               {/* Search Suggestions */}
@@ -290,34 +290,34 @@ const CourseSelection: React.FC = () => {
                   ))}
                 </div>
               )}
-            </form>
+              </form>
 
-            {/* Year Filters */}
+              {/* Year Filters */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Filter className="h-4 w-4" />
                 Filter by Year:
-              </div>
+                </div>
               <div className="flex gap-2">
-                <Button
-                  variant={selectedYear === null ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleYearFilter(null)}
-                >
-                  All Years
-                </Button>
-                {years.map((year) => (
                   <Button
-                    key={year}
-                    variant={selectedYear === year ? "default" : "outline"}
+                    variant={selectedYear === null ? "default" : "outline"}
                     size="sm"
-                    onClick={() => handleYearFilter(year)}
+                    onClick={() => handleYearFilter(null)}
                   >
-                    Year {year}
+                    All Years
                   </Button>
-                ))}
+                  {years.map((year) => (
+                    <Button
+                      key={year}
+                      variant={selectedYear === year ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleYearFilter(year)}
+                    >
+                      Year {year}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
 
             {/* Active Filters Display */}
             {(searchTerm || selectedYear !== null) && (
@@ -353,14 +353,14 @@ const CourseSelection: React.FC = () => {
                 >
                   Clear All
                 </Button>
-              </div>
+            </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Course Display Section */}
-        {searchTerm ? (
-          // Search Results
+          {/* Course Display Section */}
+          {searchTerm ? (
+            // Search Results
           <Card>
             <CardHeader>
               <CardTitle>Search Results for "{searchTerm}"</CardTitle>
@@ -373,14 +373,14 @@ const CourseSelection: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredCourses.map((course) => (
                     <EnhancedCourseCard
-                      key={course.id}
-                      course={course}
-                      onApply={async (course) => await handleCourseSelect(course)}
-                      applying={null}
-                    />
-                  ))}
-                </div>
-              ) : (
+                        key={course.id}
+                        course={course}
+                        onApply={async (course) => await handleCourseSelect(course)}
+                        applying={null}
+                      />
+                    ))}
+                  </div>
+                ) : (
                 <div className="text-center py-12">
                   <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No courses found</h3>
@@ -392,10 +392,10 @@ const CourseSelection: React.FC = () => {
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        ) : (
-          // Courses by Year
+                    </CardContent>
+                  </Card>
+          ) : (
+            // Courses by Year
           <Card>
             <CardHeader>
               <CardTitle>Available Courses</CardTitle>
@@ -408,61 +408,61 @@ const CourseSelection: React.FC = () => {
                   {years.map((year) => (
                     <TabsTrigger key={year} value={`year-${year}`}>
                       Year {year}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
 
                 <TabsContent value="all" className="mt-6">
-                  <div className="mb-4">
+                    <div className="mb-4">
                     <h3 className="text-lg font-semibold mb-2">All Available Courses</h3>
                     <p className="text-muted-foreground">Browse all courses across different academic years</p>
-                  </div>
+                    </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {Object.entries(filteredCoursesByYear).map(([year, yearCourses]) =>
-                      (yearCourses as Course[]).map((course: Course) => (
+                        (yearCourses as Course[]).map((course: Course) => (
                         <EnhancedCourseCard
-                          key={course.id}
-                          course={course}
-                          onApply={async (course) => await handleCourseSelect(course)}
-                          applying={null}
-                        />
-                      ))
-                    )}
-                  </div>
+                            key={course.id}
+                            course={course}
+                            onApply={async (course) => await handleCourseSelect(course)}
+                            applying={null}
+                          />
+                        ))
+                      )}
+                    </div>
                   {Object.keys(filteredCoursesByYear).length === 0 && (
                     <div className="text-center py-12">
                       <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-semibold mb-2">No courses available</h3>
                       <p className="text-muted-foreground">Courses will appear here once they are added to the system.</p>
                     </div>
-                  )}
-                </TabsContent>
+                    )}
+                  </TabsContent>
 
-                {years.map((year) => (
+                  {years.map((year) => (
                   <TabsContent key={year} value={`year-${year}`} className="mt-6">
-                    <div className="mb-4">
+                      <div className="mb-4">
                       <h3 className="text-lg font-semibold mb-2">Year {year} Courses</h3>
                       <p className="text-muted-foreground">Courses available for Year {year} students</p>
-                    </div>
+                      </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                       {(filteredCoursesByYear[year] as Course[] || []).map((course: Course) => (
                         <EnhancedCourseCard
-                          key={course.id}
-                          course={course}
-                          onApply={async (course) => await handleCourseSelect(course)}
-                          applying={null}
-                        />
-                      ))}
-                    </div>
+                            key={course.id}
+                            course={course}
+                            onApply={async (course) => await handleCourseSelect(course)}
+                            applying={null}
+                          />
+                        ))}
+                      </div>
                     {(!filteredCoursesByYear[year] || (filteredCoursesByYear[year] as Course[]).length === 0) && (
                       <div className="text-center py-12">
                         <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                         <h3 className="text-lg font-semibold mb-2">No Year {year} courses available</h3>
                         <p className="text-muted-foreground">Check back later for new courses.</p>
                       </div>
-                    )}
-                  </TabsContent>
-                ))}
+                      )}
+                    </TabsContent>
+                  ))}
               </Tabs>
             </CardContent>
           </Card>
@@ -482,14 +482,14 @@ const CourseSelection: React.FC = () => {
         )}
 
         {showSecureViewer && selectedCourse && (
-          <SecureDocumentViewer
-            course={selectedCourse}
-            onClose={() => {
-              setShowSecureViewer(false);
-              setSelectedCourse(null);
-            }}
-          />
-        )}
+            <SecureDocumentViewer
+              course={selectedCourse}
+              onClose={() => {
+                setShowSecureViewer(false);
+                setSelectedCourse(null);
+              }}
+            />
+          )}
       </div>
     </Layout>
   );

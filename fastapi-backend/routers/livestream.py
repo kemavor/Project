@@ -15,7 +15,7 @@ from schemas import (
 )
 from auth import get_current_user
 
-router = APIRouter(tags=["livestream"])
+router = APIRouter(prefix="/livestream", tags=["livestream"])
 
 
 @router.post("/", response_model=LiveStreamResponse, status_code=status.HTTP_201_CREATED)
@@ -70,7 +70,7 @@ def get_live_streams(
     """Get all live streams with optional filtering"""
     query = db.query(LiveStream)
 
-    if status:
+    if status and status != "all":
         query = query.filter(LiveStream.status == status)
     if course_id:
         query = query.filter(LiveStream.course_id == course_id)
@@ -172,9 +172,10 @@ def stop_live_stream(
         raise HTTPException(
             status_code=403, detail="You can only stop your own streams")
 
-    # Check if stream is live
-    if db_stream.status != "live":
-        raise HTTPException(status_code=400, detail="Stream is not live")
+    # Check if stream can be stopped (allow stopping live, scheduled, or paused streams)
+    if db_stream.status not in ["live", "scheduled", "paused"]:
+        raise HTTPException(
+            status_code=400, detail="Stream cannot be stopped in its current state")
 
     # Update stream status
     db_stream.status = "ended"
@@ -497,3 +498,31 @@ def answer_question(
     db.commit()
 
     return {"message": "Question answered successfully"}
+
+
+@router.delete("/{stream_id}")
+def delete_live_stream(
+    stream_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a live stream (instructor only)"""
+    db_stream = db.query(LiveStream).filter(LiveStream.id == stream_id).first()
+    if not db_stream:
+        raise HTTPException(status_code=404, detail="Live stream not found")
+
+    # Verify user is the instructor
+    if db_stream.instructor_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="You can only delete your own streams")
+
+    # Check if stream is currently live
+    if db_stream.status == "live":
+        raise HTTPException(
+            status_code=400, detail="Cannot delete a live stream. Stop it first.")
+
+    # Delete the stream
+    db.delete(db_stream)
+    db.commit()
+
+    return {"message": "Live stream deleted successfully"}
