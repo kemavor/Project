@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+from typing import Optional
 from config import settings
 from auth import (
     authenticate_user, get_password_hash, create_access_token,
@@ -18,7 +20,11 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-router = APIRouter(tags=["authentication"])
+router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -205,13 +211,13 @@ async def update_user_profile(
 
 @router.post("/refresh", response_model=dict)
 async def refresh_token(
-    refresh_token: str,
+    refresh_token_data: RefreshTokenRequest,
     db: Session = Depends(get_db)
 ):
     """Refresh access token using refresh token"""
     try:
         # Verify refresh token
-        payload = verify_token(refresh_token)
+        payload = verify_token(refresh_token_data.refresh_token)
         if not payload or payload.get("type") != "refresh":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

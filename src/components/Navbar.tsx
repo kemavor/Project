@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
     
     try {
       const response = await apiClient.getNotifications();
-      if (response.data) {
+      if (response.data && Array.isArray(response.data)) {
         const unread = response.data.filter((n: any) => !n.read).length;
         setUnreadCount(unread);
       }
@@ -104,8 +104,9 @@ const Navbar: React.FC = () => {
                       className={getNavButtonClass('/courses')}
                     >
                       <BookOpen className="h-4 w-4" />
-                      <span>Browse Courses</span>
+                      <span>Courses</span>
                     </Button>
+
                     <Button
                       variant="ghost"
                       onClick={() => navigate('/my-courses')}
@@ -114,61 +115,100 @@ const Navbar: React.FC = () => {
                       <GraduationCap className="h-4 w-4" />
                       <span>My Courses</span>
                     </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate('/livestream')}
+                      className={getNavButtonClass('/livestream')}
+                    >
+                      <Video className="h-4 w-4" />
+                      <span>Live Streams</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate('/chatbot')}
+                      className={getNavButtonClass('/chatbot')}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>ECHO</span>
+                    </Button>
                   </>
                 )}
 
                 {/* Teacher Navigation */}
                 {user?.role === 'teacher' && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate('/teacher/courses')}
-                    className={getNavButtonClass('/teacher/courses')}
-                  >
-                    <GraduationCap className="h-4 w-4" />
-                    <span>My Courses</span>
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate('/teacher/courses')}
+                      className={getNavButtonClass('/teacher/courses')}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>My Courses</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate('/livestream/create')}
+                      className={getNavButtonClass('/livestream/create')}
+                    >
+                      <Video className="h-4 w-4" />
+                      <span>Create Stream</span>
+                    </Button>
+
+
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate('/chatbot')}
+                      className={getNavButtonClass('/chatbot')}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>ECHO</span>
+                    </Button>
+                  </>
                 )}
 
-                {/* Shared Navigation */}
+                {/* Admin Navigation */}
+                {user?.role === 'admin' && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => navigate('/admin')}
+                      className={getNavButtonClass('/admin')}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Admin</span>
+                    </Button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1">
                 <Button
                   variant="ghost"
-                  onClick={() => navigate('/livestream')}
-                  className={getNavButtonClass('/livestream')}
+                  onClick={() => navigate('/')}
+                  className={getNavButtonClass('/')}
                 >
-                  <Play className="h-4 w-4" />
-                  <span>Live Streams</span>
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
                 </Button>
 
                 <Button
                   variant="ghost"
-                  onClick={() => navigate('/chatbot')}
-                  className={getNavButtonClass('/chatbot')}
+                  onClick={() => navigate('/courses')}
+                  className={getNavButtonClass('/courses')}
                 >
-                  <MessageSquare className="h-4 w-4" />
-                  <span>ECHO</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/login')}
-                  className="text-sm"
-                >
-                  Sign In
-                </Button>
-                <Button
-                  onClick={() => navigate('/register')}
-                  className="text-sm"
-                >
-                  Sign Up
+                  <BookOpen className="h-4 w-4" />
+                  <span>Courses</span>
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Right Side - User Actions */}
-          <div className="flex items-center space-x-2">
+          {/* Right Side - User Menu and Notifications */}
+          <div className="flex items-center space-x-4">
             {user ? (
               <>
                 {/* Notifications */}
@@ -251,132 +291,134 @@ const Navbar: React.FC = () => {
             </Button>
           </div>
         </div>
-      </div>
-      
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {/* Dashboard */}
-            <Button
-              variant="ghost"
-              onClick={() => {
-                navigate('/dashboard');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full justify-start"
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
 
-            {/* Student Navigation */}
-            {user?.role === 'student' && (
+        {/* Mobile Menu */}
+        <div className={`lg:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
+            {user ? (
               <>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    navigate('/courses');
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }}
                   className="w-full justify-start"
                 >
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Browse Courses
+                  <Home className="h-4 w-4 mr-2" />
+                  Dashboard
                 </Button>
+
+                {/* Student Mobile Navigation */}
+                {user?.role === 'student' && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/courses'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Courses
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/my-courses'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <GraduationCap className="h-4 w-4 mr-2" />
+                      My Courses
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/livestream'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Live Streams
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/chatbot'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      ECHO
+                    </Button>
+                  </>
+                )}
+
+                {/* Teacher Mobile Navigation */}
+                {user?.role === 'teacher' && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/teacher/courses'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      My Courses
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/livestream/create'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Create Stream
+                    </Button>
+
+
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/chatbot'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      ECHO
+                    </Button>
+                  </>
+                )}
+
+                {/* Admin Mobile Navigation */}
+                {user?.role === 'admin' && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => { navigate('/admin'); setMobileMenuOpen(false); }}
+                      className="w-full justify-start"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    navigate('/my-courses');
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={() => { navigate('/'); setMobileMenuOpen(false); }}
                   className="w-full justify-start"
                 >
-                  <GraduationCap className="mr-2 h-4 w-4" />
-                  My Courses
+                  <Home className="h-4 w-4 mr-2" />
+                  Home
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => { navigate('/courses'); setMobileMenuOpen(false); }}
+                  className="w-full justify-start"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Courses
                 </Button>
               </>
             )}
-
-            {/* Teacher Navigation */}
-            {user?.role === 'teacher' && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  navigate('/teacher/courses');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full justify-start"
-              >
-                <GraduationCap className="mr-2 h-4 w-4" />
-                My Courses
-              </Button>
-            )}
-            
-            {/* Shared Navigation */}
-            <Button
-              variant="ghost"
-              onClick={() => {
-                navigate('/livestream');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full justify-start"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Live Streams
-            </Button>
-
-            <Button
-              variant="ghost"
-              onClick={() => {
-                navigate('/chatbot');
-                setMobileMenuOpen(false);
-              }}
-              className="w-full justify-start"
-            >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              ECHO
-            </Button>
-
-            {/* User Actions */}
-            <div className="pt-2 border-t border-border/40">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  navigate('/profile');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full justify-start"
-              >
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  navigate('/settings');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full justify-start"
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  handleLogout();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full justify-start text-red-600 hover:text-red-700"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
-              </Button>
-            </div>
           </div>
         </div>
-      )}
+      </div>
     </nav>
   );
 };

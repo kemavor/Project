@@ -2,7 +2,19 @@ import toast from 'react-hot-toast'
 import type { Transcription } from './api'
 
 // Change this to your backend IP if not running frontend and backend on the same machine
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000' // <-- update to your backend IP
+// Use secure WebSocket if available, fallback to regular WebSocket
+const getWebSocketUrl = () => {
+  // In development, use the Vite proxy for WebSocket connections
+  if (import.meta.env.DEV) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}`;
+  }
+  
+  // In production, use the environment variable or default to backend
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return import.meta.env.VITE_WS_URL || `${protocol}//localhost:8000`;
+};
+const WS_URL = getWebSocketUrl();
 
 export interface WebSocketEvents {
   // Lecture events
@@ -45,6 +57,64 @@ export interface WebSocketEvents {
     userId: string;
   };
 
+  // Livestream events
+  'livestream:chat_message': {
+    id: number;
+    message: string;
+    message_type: string;
+    user: {
+      id: number;
+      username: string;
+      first_name: string;
+      last_name: string;
+    };
+    created_at: string;
+  };
+  'livestream:question': {
+    id: number;
+    question: string;
+    is_answered: boolean;
+    is_visible: boolean;
+    upvotes: number;
+    user: {
+      id: number;
+      username: string;
+      first_name: string;
+      last_name: string;
+    };
+    created_at: string;
+  };
+  'livestream:question_upvote': {
+    question_id: number;
+    upvotes: number;
+  };
+  'livestream:question_answer': {
+    question_id: number;
+    answer: string;
+    answered_at: string;
+  };
+  'livestream:viewer_count_update': {
+    stream_id: number;
+    count: number;
+  };
+  'livestream:status_update': {
+    stream_id: number;
+    status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+  };
+  'livestream:user_joined': {
+    stream_id: number;
+    user: {
+      id: number;
+      username: string;
+      first_name: string;
+      last_name: string;
+    };
+  };
+  'livestream:user_left': {
+    stream_id: number;
+    user_id: number;
+  };
+
   // WebRTC events
   'webrtc:signal': {
     type: 'offer' | 'answer' | 'candidate';
@@ -75,53 +145,65 @@ export interface WebSocketEvents {
 
   // Collaboration events
   'collaboration:user_joined': (data: { userId: string; userName: string; lectureId: string }) => void
-  'collaboration:user_left': (data: { userId: string; userName: string; lectureId: string }) => void
-  'collaboration:question_asked': (data: { userId: string; userName: string; question: string; lectureId: string }) => void
+  'collaboration:user_left': (data: { userId: string; lectureId: string }) => void
+  'collaboration:message': (data: { userId: string; message: string; lectureId: string }) => void
 }
-
-export type WebSocketEventHandler<T extends keyof WebSocketEvents> = (data: WebSocketEvents[T]) => void;
 
 class WebSocketService {
   private socket: WebSocket | null = null
-  private connectionRetries = 0
-  private maxRetries = 5
-  private retryDelay = 1000
   private isConnected = false
-  private eventHandlers: Map<string, Set<Function>> = new Map()
-  private currentLectureId: string | null = null
-  private authToken: string | null = null
   private isAuthenticated = false
-  private autoConnect = false
+  private authToken: string | null = null
+  private currentLectureId: string | null = null
+  private currentStreamId: string | null = null
+  private connectionRetries = 0
+  private maxRetries = 3
+  private retryDelay = 2000
+  private eventHandlers = new Map<string, Set<Function>>()
 
   constructor() {
-    // Don't auto-connect - wait for authentication
-    // this.checkAuthStatus() // Disabled auto-connection to prevent errors
-  }
+    // Check for existing auth token on initialization
+    this.authToken = localStorage.getItem('access_token')
+    this.isAuthenticated = !!this.authToken
 
-  private checkAuthStatus() {
-    const token = localStorage.getItem('authToken')
-    const user = localStorage.getItem('user')
-    
-    if (token && user) {
-      this.authToken = token
-      this.isAuthenticated = true
-      this.autoConnect = true
+    if (this.isAuthenticated) {
       this.connect()
     }
   }
 
-  public setAuthToken(token: string) {
+  // Authentication methods
+  setAuthToken(token: string) {
     this.authToken = token
     this.isAuthenticated = true
-    this.autoConnect = true
+    localStorage.setItem('access_token', token)
+    
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      // Reconnect with new token
+      this.socket.close()
+    } else {
     this.connect()
+    }
   }
 
-  public clearAuth() {
+  clearAuthToken() {
     this.authToken = null
     this.isAuthenticated = false
-    this.autoConnect = false
-    this.disconnect()
+    // Don't remove access_token from localStorage here - let AuthContext handle that
+    // localStorage.removeItem('access_token')
+    
+    if (this.socket) {
+      this.socket.close()
+    }
+  }
+
+  // Connection management
+  private validateWebSocketUrl(url: string): boolean {
+    // Ensure the URL is a valid WebSocket URL
+    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+      console.error('Invalid WebSocket URL:', url);
+      return false;
+    }
+    return true;
   }
 
   private connect() {
@@ -131,39 +213,65 @@ class WebSocketService {
       return
     }
 
+    // Don't create multiple connections
+    if (this.socket && (this.socket.readyState === WebSocket.CONNECTING || this.socket.readyState === WebSocket.OPEN)) {
+      console.log('WebSocket: Connection already exists, skipping')
+      return
+    }
+
+    try {
     // Add auth token to WebSocket URL
-    const wsUrl = `${WS_URL}/ws/lecture/?token=${this.authToken}`
+      const wsUrl = `${WS_URL}/ws/?token=${this.authToken}`
+      
+      // Validate the WebSocket URL before creating connection
+      if (!this.validateWebSocketUrl(wsUrl)) {
+        console.error('Invalid WebSocket URL, skipping connection');
+        return;
+      }
+      
+      console.log('WebSocket: Attempting to connect to:', wsUrl)
     this.socket = new WebSocket(wsUrl)
 
     this.setupEventListeners()
+    } catch (error) {
+      console.error('WebSocket: Failed to create connection:', error)
+      // Don't show error toast for WebSocket connection failures - they shouldn't affect user data
+      // toast.error('Failed to connect to real-time services')
+    }
   }
 
   private setupEventListeners() {
     if (!this.socket) return
 
     this.socket.onopen = () => {
-      console.log('WebSocket connected')
+      console.log('WebSocket connected successfully')
       this.isConnected = true
       this.connectionRetries = 0
-      toast.success('Connected to real-time services')
+      // Don't show success toast - WebSocket connection is not critical for user data
+      // toast.success('Connected to real-time services')
 
-      // Rejoin lecture if we were in one
+      // Rejoin lecture/stream if we were in one
       if (this.currentLectureId) {
         this.joinLecture(this.currentLectureId)
+      }
+      if (this.currentStreamId) {
+        this.joinLivestream(this.currentStreamId)
       }
     }
 
     this.socket.onclose = (event) => {
-      console.log('WebSocket disconnected:', event.reason)
+      console.log('WebSocket disconnected:', event.reason, 'Code:', event.code)
       this.isConnected = false
 
       // Only attempt to reconnect if authenticated and not explicitly closed
-      if (this.isAuthenticated && !event.wasClean) {
+      if (this.isAuthenticated && !event.wasClean && event.code !== 1000) {
         this.handleReconnection()
       } else if (event.code === 1000) { // Normal closure
-        toast.error('Disconnected from server')
+        // Don't show error for normal closure - WebSocket is not critical for user data
+        // toast.error('Disconnected from server')
       } else { // Abnormal closure
-        toast.error('Disconnected from real-time services unexpectedly')
+        // Don't show error for WebSocket disconnection - it shouldn't affect user data
+        // toast.error('Disconnected from real-time services unexpectedly')
         if (this.isAuthenticated) {
           this.handleReconnection()
         }
@@ -172,9 +280,7 @@ class WebSocketService {
 
     this.socket.onerror = (error) => {
       console.error('WebSocket error:', error)
-      if (this.isAuthenticated) {
-        this.handleReconnection()
-      }
+      // Don't automatically reconnect on error, let onclose handle it
     }
 
     this.socket.onmessage = (event) => {
@@ -194,108 +300,149 @@ class WebSocketService {
   }
 
   private handleReconnection() {
-    if (!this.isAuthenticated) return
-    
-    if (this.connectionRetries < this.maxRetries) {
-      this.connectionRetries++
-      const delay = this.retryDelay * Math.pow(2, this.connectionRetries - 1)
+    if (this.connectionRetries >= this.maxRetries) {
+      console.error('Max reconnection attempts reached')
+      toast.error('Failed to reconnect to real-time services')
+      return
+    }
 
-      console.log(`Attempting to reconnect (${this.connectionRetries}/${this.maxRetries}) in ${delay}ms`)
+      this.connectionRetries++
+    const delay = this.retryDelay * this.connectionRetries
+
+    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.connectionRetries})`)
 
       setTimeout(() => {
-        this.connect() // Attempt to reconnect
+      if (this.isAuthenticated) {
+        this.connect()
+      }
       }, delay)
-    } else {
-      toast.error('Lost connection to real-time services')
-    }
   }
 
-  // Public methods
-  public on<T extends keyof WebSocketEvents>(event: T, handler: WebSocketEventHandler<T>) {
+  // Event handling
+  on<T extends keyof WebSocketEvents>(event: T, callback: WebSocketEvents[T]) {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set())
     }
-    this.eventHandlers.get(event)?.add(handler)
+    this.eventHandlers.get(event)!.add(callback as Function)
   }
 
-  public off<T extends keyof WebSocketEvents>(event: T, handler: WebSocketEventHandler<T>) {
-    this.eventHandlers.get(event)?.delete(handler)
+  off<T extends keyof WebSocketEvents>(event: T, callback: WebSocketEvents[T]) {
+    const listeners = this.eventHandlers.get(event)
+    if (listeners) {
+      listeners.delete(callback as Function)
+    }
   }
 
-  public emit<T extends keyof WebSocketEvents>(event: T, data: WebSocketEvents[T]) {
-    if (this.socket && this.isConnected) {
-      this.socket.send(JSON.stringify({ type: event, data: data }))
+  // Emit events
+  emit(event: string, data: any) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ type: event, data }))
     } else {
       console.warn('WebSocket not connected, cannot emit event:', event)
     }
   }
 
-  // Lecture-specific methods
-  public joinLecture(lectureId: string) {
+  // Lecture methods
+  joinLecture(lectureId: string) {
     this.currentLectureId = lectureId
-    if (this.socket && this.isConnected) {
-      this.emit('webrtc:join', { lectureId: lectureId, userId: 'anonymous' }) // Assuming userId is sent from backend
-    }
+    this.emit('lecture:join', { lectureId })
   }
 
-  public leaveLecture(lectureId: string) {
+  leaveLecture(lectureId: string) {
+    this.emit('lecture:leave', { lectureId })
     if (this.currentLectureId === lectureId) {
       this.currentLectureId = null
     }
   }
 
-  public askQuestion(lectureId: string, question: string) {
-    this.emit('lecture:question', {
-      id: Date.now().toString(),
-      user: 'anonymous', // This should be the actual user
-      question: question,
-      timestamp: new Date().toISOString(),
-      upvotes: 0,
-      answered: false
-    })
+  sendLectureMessage(lectureId: string, message: string) {
+    this.emit('lecture:chat_message', { lectureId, message })
   }
 
-  public sendMessage(lectureId: string, message: string) {
-    this.emit('lecture:chat_message', {
-      id: Date.now().toString(),
-      user: 'anonymous', // This should be the actual user
-      message: message,
-      timestamp: new Date().toISOString()
-    })
+  askLectureQuestion(lectureId: string, question: string) {
+    this.emit('lecture:question', { lectureId, question })
   }
 
-  public votePoll(lectureId: string, pollId: string, optionId: string) {
-    this.emit('lecture:poll_vote', {
-      pollId: pollId,
-      optionId: optionId,
-      userId: 'anonymous' // This should be the actual user
-    })
+  // Livestream methods - Note: Backend doesn't handle join/leave events
+  // These are handled automatically by the backend when connecting to /ws/livestream/{stream_id}
+  joinLivestream(streamId: string) {
+    this.currentStreamId = streamId
+    // Backend automatically handles join when connecting to the stream-specific endpoint
+    console.log('Joined livestream:', streamId)
   }
 
-  public isConnectedToServer(): boolean {
-    return this.isConnected
+  leaveLivestream(streamId: string) {
+    if (this.currentStreamId === streamId) {
+      this.currentStreamId = null
+    }
+    // Backend automatically handles leave when disconnecting
+    console.log('Left livestream:', streamId)
   }
 
-  public getConnectionStatus(): 'connected' | 'connecting' | 'disconnected' {
-    if (this.socket?.readyState === WebSocket.OPEN) return 'connected'
-    if (this.socket?.readyState === WebSocket.CONNECTING) return 'connecting'
+  sendLivestreamChatMessage(streamId: string, message: string, messageType: string = 'text') {
+    this.emit('livestream:chat_message', { streamId, message, messageType })
+  }
+
+  askLivestreamQuestion(streamId: string, question: string) {
+    this.emit('livestream:question', { streamId, question })
+  }
+
+  upvoteLivestreamQuestion(streamId: string, questionId: number) {
+    this.emit('livestream:question_upvote', { streamId, questionId })
+  }
+
+  answerLivestreamQuestion(streamId: string, questionId: number, answer: string) {
+    this.emit('livestream:question_answer', { streamId, questionId, answer })
+  }
+
+  // WebRTC methods
+  sendWebRTCSignal(lectureId: string, signal: any, to?: string) {
+    this.emit('webrtc:signal', { lectureId, signal, to })
+  }
+
+  startWebRTCBroadcast(lectureId: string) {
+    this.emit('webrtc:start', { lectureId })
+  }
+
+  stopWebRTCBroadcast(lectureId: string) {
+    this.emit('webrtc:stop', { lectureId })
+  }
+
+  // Utility methods
+  isConnectedToServer() {
+    return this.isConnected && this.socket?.readyState === WebSocket.OPEN
+  }
+
+  getConnectionState() {
+    if (!this.socket) return 'disconnected'
+    switch (this.socket.readyState) {
+      case WebSocket.CONNECTING:
+        return 'connecting'
+      case WebSocket.OPEN:
+        return 'connected'
+      case WebSocket.CLOSING:
+        return 'closing'
+      case WebSocket.CLOSED:
     return 'disconnected'
+      default:
+        return 'unknown'
+    }
   }
 
-  public disconnect() {
+  // Cleanup
+  disconnect() {
     if (this.socket) {
-      this.socket.close(1000, 'Client disconnecting')
-      this.socket = null
+      this.socket.close(1000, 'User initiated disconnect')
     }
     this.isConnected = false
-  }
-
-  public reconnect() {
-    this.disconnect()
-    setTimeout(() => {
-      this.connect()
-    }, 1000)
+    this.currentLectureId = null
+    this.currentStreamId = null
+    this.eventHandlers.clear()
   }
 }
 
+// Create singleton instance
 export const wsService = new WebSocketService()
+
+// Export for use in components
+export default wsService

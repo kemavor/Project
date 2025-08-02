@@ -7,7 +7,7 @@ from models import User, UserStatistics, LearningActivity
 from schemas import UserStatisticsResponse, LearningActivityCreate, LearningActivityResponse
 from auth import get_current_active_user
 
-router = APIRouter(tags=["statistics"])
+router = APIRouter(prefix="/statistics", tags=["statistics"])
 
 
 def get_or_create_user_statistics(db: Session, user_id: int) -> UserStatistics:

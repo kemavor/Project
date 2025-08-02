@@ -21,7 +21,8 @@ import {
   ArrowLeft,
   X
 } from 'lucide-react';
-import { apiClient, CourseDocument } from '@/lib/api';
+import { apiClient } from '@/lib/api';
+import { CourseDocument } from '@/types/course';
 import { toast } from 'react-hot-toast';
 import { DocumentSearch, SearchUtils } from '@/lib/searchUtils';
 

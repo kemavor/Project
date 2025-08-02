@@ -11,6 +11,7 @@ import TeacherCourses from './pages/TeacherCourses';
 import LectureManager from './pages/LectureManager';
 import CreateLiveStream from './pages/CreateLiveStream';
 import StreamViewer from './pages/StreamViewer';
+import StreamTest from './pages/StreamTest';
 import StreamList from './pages/StreamList';
 import Unauthorized from './pages/Unauthorized';
 import QuizDashboard from './pages/QuizDashboard';
@@ -28,6 +29,9 @@ import Chatbot from './pages/Chatbot';
 import { StudentOnlyRoute } from './components/StudentOnlyRoute';
 import CourseDetail from './pages/CourseDetail';
 import CourseDocuments from './pages/CourseDocuments';
+import { StreamingArchitectureSelector } from './components/StreamingArchitectureSelector';
+import { StreamingSetupGuide } from './components/StreamingSetupGuide';
+import StreamingDemo from './pages/StreamingDemo';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -60,13 +64,55 @@ const AppContent: React.FC = () => {
       <Route path="/lectures" element={<ProtectedRoute><LectureManager /></ProtectedRoute>} />
       <Route path="/livestream/create" element={<ProtectedRoute><CreateLiveStream /></ProtectedRoute>} />
       <Route path="/livestream" element={<ProtectedRoute><StreamList /></ProtectedRoute>} />
-      <Route path="/livestream/:streamId" element={<ProtectedRoute><StreamViewer /></ProtectedRoute>} />
+              <Route path="/livestream/:streamId" element={<ProtectedRoute><StreamViewer /></ProtectedRoute>} />
+        <Route path="/stream-test" element={<StreamTest />} />
       <Route path="/chatbot" element={<ProtectedRoute><Chatbot /></ProtectedRoute>} />
       <Route path="/quizzes" element={<ProtectedRoute><QuizDashboard /></ProtectedRoute>} />
       <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
       <Route path="/summaries" element={<ProtectedRoute><Summaries /></ProtectedRoute>} />
       <Route path="/student/documents" element={<ProtectedRoute><StudentCourseDocuments /></ProtectedRoute>} />
       <Route path="/student/applied-courses" element={<ProtectedRoute><StudentAppliedCourses /></ProtectedRoute>} />
+      
+      {/* Add new streaming architecture routes */}
+      <Route 
+        path="/streaming-setup" 
+        element={
+          <ProtectedRoute>
+            <div className="container mx-auto px-4 py-8">
+              <StreamingArchitectureSelector 
+                onSelect={(architecture) => {
+                  console.log('Selected architecture:', architecture);
+                  // Handle architecture selection
+                }}
+              />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/streaming-guide/:architecture" 
+        element={
+          <ProtectedRoute>
+            <div className="container mx-auto px-4 py-8">
+              <StreamingSetupGuide 
+                architecture="mediasoup"
+                streamId="test-stream-123"
+              />
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Add streaming demo route */}
+      <Route 
+        path="/streaming-demo" 
+        element={
+          <ProtectedRoute>
+            <StreamingDemo />
+          </ProtectedRoute>
+        } 
+      />
       
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />

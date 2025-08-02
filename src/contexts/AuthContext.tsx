@@ -53,10 +53,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Clear invalid data
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
-        wsService.clearAuth();
+        wsService.clearAuthToken();
       }
     } else {
-      wsService.clearAuth();
+      wsService.clearAuthToken();
     }
     
     setIsLoading(false);
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('user');
     
     // Clear WebSocket auth
-    wsService.clearAuth();
+    wsService.clearAuthToken();
   };
 
   const forgotPassword = async (email: string) => {
