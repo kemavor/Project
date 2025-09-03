@@ -69,12 +69,12 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   };
 
   return (
-    <Card className={`group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 overflow-hidden ${className}`}>
+    <Card className={`group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-white dark:bg-gray-800 overflow-hidden ${className}`}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <div className={`p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 group-hover:scale-110 transition-transform duration-200`}>
+              <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-700 group-hover:scale-110 transition-transform duration-200`}>
                 <Icon className={`w-5 h-5 ${iconColor}`} />
               </div>
               <div className="flex items-center gap-1">
@@ -102,8 +102,8 @@ export const StatsCard: React.FC<StatsCardProps> = ({
             )}
           </div>
           
-          {/* Decorative gradient overlay */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-300"></div>
+          {/* Decorative solid overlay */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gray-200 dark:bg-gray-600 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-300"></div>
         </div>
       </CardContent>
     </Card>

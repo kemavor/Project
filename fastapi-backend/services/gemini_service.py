@@ -69,13 +69,13 @@ class GeminiService:
                 # Use environment variable for model selection
                 model_name = os.getenv('ECHO_MODEL', 'gemini-1.5-flash')
                 self.model = genai.GenerativeModel(model_name)
-                print(f"✅ ECHO initialized with {model_name}")
+                print(f"ECHO initialized with {model_name}")
             except Exception as e:
                 print(f"Warning: Could not initialize Gemini model: {e}")
                 # Fallback to basic model
                 try:
                     self.model = genai.GenerativeModel('gemini-1.5-flash')
-                    print("✅ ECHO initialized with fallback model")
+                    print("ECHO initialized with fallback model")
                 except Exception as fallback_error:
                     print(
                         f"Warning: Could not initialize fallback model: {fallback_error}")

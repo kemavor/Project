@@ -499,7 +499,10 @@ class LiveStreamBase(BaseModel):
     max_viewers: int = Field(default=100, ge=1, le=1000)
     is_public: bool = True
     is_recording: bool = False
-    quality_settings: Dict[str, Any] = Field(default_factory=dict)
+    
+    # RTMP-to-HLS streaming settings
+    transcription_enabled: bool = True
+    auto_summary_enabled: bool = True
 
 
 class LiveStreamCreate(LiveStreamBase):
@@ -513,23 +516,156 @@ class LiveStreamUpdate(BaseModel):
     max_viewers: Optional[int] = Field(None, ge=1, le=1000)
     is_public: Optional[bool] = None
     is_recording: Optional[bool] = None
-    quality_settings: Optional[Dict[str, Any]] = None
 
 
 class LiveStreamResponse(LiveStreamBase):
     id: int
     instructor_id: int
     status: str
-    stream_key: str
-    stream_url: Optional[str] = None
-    viewer_count: int
+    rtmp_key: str
+    hls_url: Optional[str] = None
+    rtmp_server_url: Optional[str] = None
+    viewer_count: int = 0
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
-    duration: int
+    duration: int = 0
     recording_url: Optional[str] = None
+    
+    # Video recording information
+    video_s3_key: Optional[str] = None
+    video_s3_bucket: Optional[str] = None
+    video_file_size: Optional[int] = None
+    video_duration_seconds: Optional[int] = None
+    video_content_type: Optional[str] = None
+    recording_started_at: Optional[datetime] = None
+    recording_ended_at: Optional[datetime] = None
+    
+    chat_locked: bool = False
+    
+    # Additional fields for dashboard display
+    instructor_name: Optional[str] = None
+    course_name: Optional[str] = None
+    
+    # WebRTC integration fields
+    webrtc_enabled: bool = False
+    webrtc_room_id: Optional[str] = None
+    whep_url: Optional[str] = None
+    
     created_at: datetime
     updated_at: datetime
 
+    class Config:
+        from_attributes = True
+    
+    @classmethod
+    def from_orm(cls, obj):
+        """Custom serializer to handle JSON fields and missing attributes"""
+        import json
+        
+        # Helper function to safely get attribute with default value
+        def safe_getattr(obj, attr, default=None):
+            try:
+                return getattr(obj, attr, default)
+            except AttributeError:
+                return default
+        
+        # Handle quality_settings JSON field safely
+        quality_settings = {}
+        try:
+            qs = safe_getattr(obj, 'quality_settings')
+            if isinstance(qs, str):
+                quality_settings = json.loads(qs)
+            elif isinstance(qs, dict):
+                quality_settings = qs
+            elif qs is None:
+                quality_settings = {}
+        except (json.JSONDecodeError, TypeError):
+            quality_settings = {}
+        
+        data = {
+            'id': obj.id,
+            'title': obj.title,
+            'description': obj.description,
+            'course_id': obj.course_id,
+            'instructor_id': obj.instructor_id,
+            'status': obj.status,
+            'rtmp_key': obj.rtmp_key,
+            'stream_url': safe_getattr(obj, 'stream_url'),
+            'viewer_count': safe_getattr(obj, 'viewer_count', 0),
+            'started_at': safe_getattr(obj, 'started_at'),
+            'ended_at': safe_getattr(obj, 'ended_at'),
+            'duration': safe_getattr(obj, 'duration', 0),
+            'recording_url': safe_getattr(obj, 'recording_url'),
+            'video_s3_key': safe_getattr(obj, 'video_s3_key'),
+            'video_s3_bucket': safe_getattr(obj, 'video_s3_bucket'),
+            'video_file_size': safe_getattr(obj, 'video_file_size'),
+            'video_duration_seconds': safe_getattr(obj, 'video_duration_seconds'),
+            'video_content_type': safe_getattr(obj, 'video_content_type'),
+            'recording_started_at': safe_getattr(obj, 'recording_started_at'),
+            'recording_ended_at': safe_getattr(obj, 'recording_ended_at'),
+            'chat_locked': safe_getattr(obj, 'chat_locked', False),
+            'created_at': obj.created_at,
+            'updated_at': obj.updated_at,
+            'scheduled_at': safe_getattr(obj, 'scheduled_at'),
+            'max_viewers': safe_getattr(obj, 'max_viewers', 100),
+            'is_public': safe_getattr(obj, 'is_public', True),
+            'is_recording': safe_getattr(obj, 'is_recording', False),
+            'streaming_mode': safe_getattr(obj, 'streaming_mode', 'mediasoup'),
+            'transcription_enabled': safe_getattr(obj, 'transcription_enabled', True),
+            'auto_summary_enabled': safe_getattr(obj, 'auto_summary_enabled', True),
+            'quality_settings': quality_settings,
+            # WebRTC fields
+            'webrtc_enabled': safe_getattr(obj, 'webrtc_enabled', False),
+            'webrtc_room_id': safe_getattr(obj, 'webrtc_room_id'),
+        }
+        
+        # Generate WebRTC URLs if enabled
+        if data['webrtc_enabled'] and data['id']:
+            mediasoup_base = "http://localhost:3001"
+            data['whep_url'] = f"{mediasoup_base}/whep/{data['id']}"
+            data['hls_url'] = f"{mediasoup_base}/hls/{data['id']}/stream.m3u8"
+        else:
+            data['whep_url'] = None
+            data['hls_url'] = None
+        
+        return cls(**data)
+
+
+# Video recording schemas
+class VideoRecordingRequest(BaseModel):
+    """Request to start/stop video recording"""
+    action: str  # "start" or "stop"
+    quality: Optional[str] = "720p"  # Video quality setting
+
+
+class VideoChunkUpload(BaseModel):
+    """Schema for uploading video chunks during live streaming"""
+    stream_id: int
+    chunk_number: int
+    chunk_data: bytes
+
+
+class VideoRecordingResponse(BaseModel):
+    """Response for video recording operations"""
+    success: bool
+    message: str
+    recording_url: Optional[str] = None
+    s3_key: Optional[str] = None
+    file_size: Optional[int] = None
+
+
+class RecordedLectureResponse(BaseModel):
+    """Response for recorded lecture information"""
+    id: int
+    title: str
+    description: Optional[str] = None
+    course_id: int
+    instructor_name: str
+    recording_url: str
+    video_duration_seconds: Optional[int] = None
+    file_size: Optional[int] = None
+    created_at: datetime
+    
     class Config:
         from_attributes = True
 
@@ -716,3 +852,358 @@ class CourseAnalysisResponse(BaseModel):
     file_types: List[str]
     success: bool
     error: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChatLockRequest(BaseModel):
+    locked: bool = Field(..., description="Whether to lock or unlock the chat")
+
+
+# Transcription Schemas
+
+class StreamTranscriptionBase(BaseModel):
+    text: str = Field(..., min_length=1, max_length=10000)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    language: str = Field(default="en", max_length=10)
+    start_time: Optional[float] = Field(None, ge=0.0)
+    end_time: Optional[float] = Field(None, ge=0.0)
+    duration: Optional[float] = Field(None, ge=0.0)
+    speaker_id: Optional[str] = None
+    is_final: bool = Field(default=False)
+    segment_index: int = Field(default=0, ge=0)
+
+
+class StreamTranscriptionCreate(StreamTranscriptionBase):
+    stream_id: int
+
+
+class StreamTranscriptionUpdate(BaseModel):
+    text: Optional[str] = Field(None, min_length=1, max_length=10000)
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    language: Optional[str] = Field(None, max_length=10)
+    start_time: Optional[float] = Field(None, ge=0.0)
+    end_time: Optional[float] = Field(None, ge=0.0)
+    duration: Optional[float] = Field(None, ge=0.0)
+    speaker_id: Optional[str] = None
+    is_final: Optional[bool] = None
+    segment_index: Optional[int] = Field(None, ge=0)
+
+
+class StreamTranscriptionResponse(StreamTranscriptionBase):
+    id: int
+    stream_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class StreamTranscriptionSessionBase(BaseModel):
+    model_name: str = Field(default="base", max_length=50)
+    language: str = Field(default="en", max_length=10)
+    is_active: bool = Field(default=True)
+
+
+class StreamTranscriptionSessionCreate(StreamTranscriptionSessionBase):
+    stream_id: int
+
+
+class StreamTranscriptionSessionUpdate(BaseModel):
+    model_name: Optional[str] = Field(None, max_length=50)
+    language: Optional[str] = Field(None, max_length=10)
+    is_active: Optional[bool] = None
+    ended_at: Optional[datetime] = None
+
+
+class StreamTranscriptionSessionResponse(StreamTranscriptionSessionBase):
+    id: int
+    stream_id: int
+    total_segments: int
+    average_confidence: float
+    processing_time_ms: float
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TranscriptionRequest(BaseModel):
+    audio_data: str = Field(..., description="Base64 encoded audio data")
+    sample_rate: int = Field(default=16000, ge=8000, le=48000)
+    language: Optional[str] = Field(None, max_length=10)
+    model_name: Optional[str] = Field(None, max_length=50)
+
+
+class TranscriptionResponse(BaseModel):
+    text: str
+    confidence: float
+    language: str
+    processing_time_ms: float
+    model_name: str
+    success: bool = True
+    error: Optional[str] = None
+
+
+class StreamTranscriptionStats(BaseModel):
+    stream_id: int
+    total_segments: int
+    average_confidence: float
+    total_duration: float
+    languages_detected: List[str]
+    is_active: bool
+    last_transcription_at: Optional[datetime] = None
+
+
+# Lecture Summary Schemas
+
+class LectureSummaryBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    summary: str = Field(..., min_length=10)
+    key_points: List[str] = Field(default_factory=list)
+    topics_covered: List[str] = Field(default_factory=list)
+
+
+class LectureSummaryCreate(LectureSummaryBase):
+    stream_id: int
+    course_id: int
+    transcription_segments_count: int = 0
+    total_transcription_duration: float = 0.0
+
+
+class LectureSummaryUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    summary: Optional[str] = Field(None, min_length=10)
+    key_points: Optional[List[str]] = None
+    topics_covered: Optional[List[str]] = None
+
+
+class LectureSummaryResponse(LectureSummaryBase):
+    id: int
+    stream_id: int
+    course_id: int
+    generated_by: str
+    confidence_score: float
+    word_count: int
+    transcription_segments_count: int
+    total_transcription_duration: float
+    generated_at: datetime
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SummaryAccessCreate(BaseModel):
+    summary_id: int
+    view_duration: int = 0
+    is_bookmarked: bool = False
+
+
+class SummaryAccessResponse(BaseModel):
+    id: int
+    summary_id: int
+    user_id: int
+    accessed_at: datetime
+    view_duration: int
+    is_bookmarked: bool
+
+    class Config:
+        from_attributes = True
+
+
+class CourseSummariesResponse(BaseModel):
+    course_id: int
+    course_title: str
+    summaries: List[LectureSummaryResponse]
+    total_summaries: int
+    total_duration: float  # Total duration of all lectures
+
+
+# ============ ENHANCED QUIZ SCHEMAS ============
+
+class MasterTopicBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class MasterTopicCreate(MasterTopicBase):
+    pass
+
+class MasterTopicResponse(MasterTopicBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class SubMasterTopicBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    master_topic_id: int
+
+class SubMasterTopicCreate(SubMasterTopicBase):
+    pass
+
+class SubMasterTopicResponse(SubMasterTopicBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class SpecificMasterTopicBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    sub_topic_id: int
+    course_id: Optional[int] = None
+
+class SpecificMasterTopicCreate(SpecificMasterTopicBase):
+    pass
+
+class SpecificMasterTopicResponse(SpecificMasterTopicBase):
+    id: int
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# ============ QUIZ SCHEMAS ============
+
+class QuizStartRequest(BaseModel):
+    topic: str
+    difficulty: str = "Easy"  # Easy, Medium, Hard
+    num_questions: int = 10
+    course_id: Optional[int] = None
+    time_limit: Optional[int] = 600  # seconds
+
+class MCQQuestion(BaseModel):
+    question: str
+    options: List[str]
+    answer: str
+
+class QuizGenerationRequest(BaseModel):
+    topic: str
+    num_questions: int = 5
+    difficulty: str = "Easy"
+    course_id: Optional[int] = None
+    time_limit: Optional[int] = 300
+
+class MCQCreate(BaseModel):
+    question_data: Dict[str, Any]  # JSON containing questions
+    difficulty: str = "Easy"
+    time_limit: int = 300
+    specific_topic_id: Optional[int] = None
+    course_id: Optional[int] = None
+    generation_prompt: Optional[str] = None
+
+class MCQResponse(BaseModel):
+    id: int
+    question_data: Dict[str, Any]
+    difficulty: str
+    time_limit: int
+    ai_generated: bool
+    ai_model_used: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class QuizSessionResponse(BaseModel):
+    id: int
+    session_id: str
+    topic_name: str
+    difficulty: str
+    num_questions: int
+    time_limit: int
+    status: str
+    current_question_index: int
+    questions_json: Optional[Dict[str, Any]] = None
+    score: int
+    total_questions: int
+    started_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class QuestionAnswer(BaseModel):
+    question_index: int
+    user_answer: str
+
+class QuizAnswerRequest(BaseModel):
+    session_id: str
+    question_index: int
+    user_answer: str
+    time_taken: Optional[int] = 0
+
+class QuizCompleteRequest(BaseModel):
+    session_id: str
+    total_time_taken: int
+
+class QuizResults(BaseModel):
+    session_id: str
+    score: int
+    total_questions: int
+    percentage: float
+    time_taken: int
+    qv_coins_earned: int
+    questions_breakdown: List[Dict[str, Any]]
+    difficulty: str
+    topic_name: str
+    completed_at: datetime
+
+class UserTopicProgressResponse(BaseModel):
+    id: int
+    user_id: int
+    master_topic_id: Optional[int]
+    sub_topic_id: Optional[int] 
+    specific_topic_id: Optional[int]
+    level: int
+    streak: int
+    total_qv_coins: int
+    questions_attempted: int
+    questions_correct: int
+    accuracy_percentage: float
+    last_activity: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserQuizStats(BaseModel):
+    total_quizzes: int
+    total_questions_attempted: int
+    total_questions_correct: int
+    overall_accuracy: float
+    total_qv_coins: int
+    current_streak: int
+    favorite_topics: List[str]
+    recent_performance: List[Dict[str, Any]]
+
+class LeaderboardEntry(BaseModel):
+    username: str
+    total_coins: int
+    level: int
+    streak: int
+    accuracy: float
+
+class TopicLeaderboard(BaseModel):
+    topic_name: str
+    topic_level: str  # master, sub, specific
+    leaderboard: List[LeaderboardEntry]
+
+# ============ USER DETAIL SCHEMAS ============
+
+class UserDetailsResponse(BaseModel):
+    username: str
+    level: int
+    streak: int
+    total_qv_coins: int
+    master_topics: List[str]
+    sub_topics: List[str] 
+    specific_topics: List[str]
+    quiz_stats: UserQuizStats

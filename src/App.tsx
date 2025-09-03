@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -11,12 +11,15 @@ import TeacherCourses from './pages/TeacherCourses';
 import LectureManager from './pages/LectureManager';
 import CreateLiveStream from './pages/CreateLiveStream';
 import StreamViewer from './pages/StreamViewer';
-import StreamTest from './pages/StreamTest';
+import WatchLiveStream from './pages/WatchLiveStream';
+// import StreamTest from './pages/StreamTest';
 import StreamList from './pages/StreamList';
 import Unauthorized from './pages/Unauthorized';
 import QuizDashboard from './pages/QuizDashboard';
+import EnhancedQuiz from './pages/EnhancedQuiz';
+import QuizSession from './pages/QuizSession';
 import Flashcards from './pages/Flashcards';
-import Summaries from './pages/Summaries';
+import LectureSummaries from './pages/LectureSummaries';
 import StudentCourseDocuments from './pages/StudentCourseDocuments';
 import StudentAppliedCourses from './pages/StudentAppliedCourses';
 import MyCourses from './pages/MyCourses';
@@ -29,9 +32,36 @@ import Chatbot from './pages/Chatbot';
 import { StudentOnlyRoute } from './components/StudentOnlyRoute';
 import CourseDetail from './pages/CourseDetail';
 import CourseDocuments from './pages/CourseDocuments';
-import { StreamingArchitectureSelector } from './components/StreamingArchitectureSelector';
-import { StreamingSetupGuide } from './components/StreamingSetupGuide';
-import StreamingDemo from './pages/StreamingDemo';
+// import StreamingDemo from './pages/StreamingDemo';
+import Admin from './pages/Admin';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import { authPersistence } from './lib/enhanced-auth-persistence';
+
+function App() {
+  useEffect(() => {
+    // Initialize enhanced authentication persistence
+    authPersistence.initializeAuth().then((authState) => {
+      if (authState) {
+        console.log('🔐 Enhanced auth initialized successfully');
+      } else {
+        console.log('🔐 No valid authentication state found');
+      }
+    }).catch((error) => {
+      console.error('❌ Enhanced auth initialization failed:', error);
+    });
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
+}
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -49,6 +79,8 @@ const AppContent: React.FC = () => {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       
@@ -64,72 +96,33 @@ const AppContent: React.FC = () => {
       <Route path="/lectures" element={<ProtectedRoute><LectureManager /></ProtectedRoute>} />
       <Route path="/livestream/create" element={<ProtectedRoute><CreateLiveStream /></ProtectedRoute>} />
       <Route path="/livestream" element={<ProtectedRoute><StreamList /></ProtectedRoute>} />
-              <Route path="/livestream/:streamId" element={<ProtectedRoute><StreamViewer /></ProtectedRoute>} />
-        <Route path="/stream-test" element={<StreamTest />} />
+      <Route path="/livestream/:streamId" element={<ProtectedRoute><WatchLiveStream /></ProtectedRoute>} />
+      <Route path="/stream/:streamId" element={<ProtectedRoute><StreamViewer /></ProtectedRoute>} />
+      {/* <Route path="/stream-test" element={<StreamTest />} /> */}
       <Route path="/chatbot" element={<ProtectedRoute><Chatbot /></ProtectedRoute>} />
-      <Route path="/quizzes" element={<ProtectedRoute><QuizDashboard /></ProtectedRoute>} />
+      <Route path="/quiz" element={<ProtectedRoute><EnhancedQuiz /></ProtectedRoute>} />
+      <Route path="/quiz/session/:sessionId" element={<ProtectedRoute><QuizSession /></ProtectedRoute>} />
+      <Route path="/quiz/old" element={<ProtectedRoute><QuizDashboard /></ProtectedRoute>} />
       <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
-      <Route path="/summaries" element={<ProtectedRoute><Summaries /></ProtectedRoute>} />
+      <Route path="/summaries" element={<ProtectedRoute><LectureSummaries /></ProtectedRoute>} />
       <Route path="/student/documents" element={<ProtectedRoute><StudentCourseDocuments /></ProtectedRoute>} />
       <Route path="/student/applied-courses" element={<ProtectedRoute><StudentAppliedCourses /></ProtectedRoute>} />
       
-      {/* Add new streaming architecture routes */}
-      <Route 
-        path="/streaming-setup" 
-        element={
-          <ProtectedRoute>
-            <div className="container mx-auto px-4 py-8">
-              <StreamingArchitectureSelector 
-                onSelect={(architecture) => {
-                  console.log('Selected architecture:', architecture);
-                  // Handle architecture selection
-                }}
-              />
-            </div>
-          </ProtectedRoute>
-        } 
-      />
-      
-      <Route 
-        path="/streaming-guide/:architecture" 
-        element={
-          <ProtectedRoute>
-            <div className="container mx-auto px-4 py-8">
-              <StreamingSetupGuide 
-                architecture="mediasoup"
-                streamId="test-stream-123"
-              />
-            </div>
-          </ProtectedRoute>
-        } 
-      />
+      {/* Streaming architecture routes removed (components not present) */}
+      {/* <Route path="/streaming-setup" element={<ProtectedRoute><StreamingArchitectureSelector onSelect={() => {}} /></ProtectedRoute>} /> */}
+      {/* <Route path="/streaming-guide/:architecture" element={<ProtectedRoute><StreamingSetupGuide architecture="mediasoup" streamId="test" /></ProtectedRoute>} /> */}
 
       {/* Add streaming demo route */}
-      <Route 
-        path="/streaming-demo" 
-        element={
-          <ProtectedRoute>
-            <StreamingDemo />
-          </ProtectedRoute>
-        } 
-      />
+      {/* Removed streaming demo route because file was deleted */}
+      {/* <Route path="/streaming-demo" element={<ProtectedRoute><StreamingDemo /></ProtectedRoute>} /> */}
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
       
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
-
-function App() {
-  return (
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  );
-}
 
 export default App;

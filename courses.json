@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "Introduction to Computer Science",
+    "description": "A comprehensive introduction to computer science fundamentals",
+    "instructor": "Dr. Smith",
+    "duration": "12 weeks",
+    "level": "Beginner",
+    "enrollment_count": 45,
+    "rating": 4.5,
+    "created_at": "2025-07-25T12:50:20Z",
+    "updated_at": "2025-07-25T12:50:20Z"
+  },
+  {
+    "id": 2,
+    "title": "Advanced Programming Concepts",
+    "description": "Deep dive into advanced programming techniques and best practices",
+    "instructor": "Prof. Johnson",
+    "duration": "10 weeks",
+    "level": "Intermediate",
+    "enrollment_count": 32,
+    "rating": 4.7,
+    "created_at": "2025-07-27T12:10:44Z",
+    "updated_at": "2025-07-27T12:10:46Z"
+  }
+]

@@ -9,6 +9,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import {
+  H1, H2, H3, H4, H5, H6,
+  LargeText, MediumText, NormalText, SmallText,
+  Button as DSButton,
+  Badge as DSBadge,
+  Card as DSCard
+} from '@/components/ui/design-system';
+import {
   BookOpen,
   PlayCircle,
   Download,
@@ -76,7 +83,7 @@ const CourseDetail: React.FC = () => {
           setError(response.error);
           toast.error(response.error);
         } else {
-          setCourse(response.data);
+          setCourse(response.data as CourseDetail || null);
         }
       } catch (err) {
         if (!isMounted) return;
@@ -104,7 +111,7 @@ const CourseDetail: React.FC = () => {
         <div className="p-6 space-y-6">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading course details...</p>
+            <p className="text-gray-600">Loading course details...</p>
           </div>
         </div>
       </Layout>
@@ -116,11 +123,11 @@ const CourseDetail: React.FC = () => {
       <Layout>
         <div className="p-6 space-y-6">
           <div className="text-center py-12">
-            <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">
               {error?.includes('log in') ? 'Authentication Required' : 'Course not found'}
             </h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-gray-600 mb-4">
               {error || 'The requested course could not be found.'}
             </p>
             {error?.includes('log in') ? (
@@ -157,10 +164,10 @@ const CourseDetail: React.FC = () => {
               <BookOpen className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">{course.title}</h1>
-              <p className="text-muted-foreground text-lg">
+              <H1 className="text-gray-900 mb-1">{course.title}</H1>
+              <LargeText className="text-gray-600">
                 Course details and learning materials
-              </p>
+              </LargeText>
             </div>
           </div>
         </div>
@@ -171,25 +178,25 @@ const CourseDetail: React.FC = () => {
             {/* Course Overview */}
             <Card>
               <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
-                <CardDescription>Essential information about this course</CardDescription>
+                <CardTitle className="text-gray-900">Course Overview</CardTitle>
+                <CardDescription className="text-gray-600">Essential information about this course</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-muted-foreground">{course.description}</p>
+                  <h3 className="font-semibold mb-2 text-gray-900">Description</h3>
+                  <p className="text-gray-700">{course.description}</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">
                       Enrolled: {new Date(course.enrolled_at || '').toLocaleDateString()}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
+                    <Star className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">
                       Credits: {course.credits}
                     </span>
                   </div>
@@ -206,8 +213,8 @@ const CourseDetail: React.FC = () => {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Access course materials and resources</CardDescription>
+                <CardTitle className="text-gray-900">Quick Actions</CardTitle>
+                <CardDescription className="text-gray-600">Access course materials and resources</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4">
@@ -235,8 +242,8 @@ const CourseDetail: React.FC = () => {
             {/* Instructor Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <User className="h-5 w-5 text-gray-700" />
                   Instructor
                 </CardTitle>
               </CardHeader>
@@ -245,13 +252,13 @@ const CourseDetail: React.FC = () => {
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <User className="h-8 w-8 text-blue-600" />
                   </div>
-                  <h3 className="font-semibold">
+                  <h3 className="font-semibold text-gray-900">
                     {course.instructor?.first_name && course.instructor?.last_name 
                       ? `${course.instructor.first_name} ${course.instructor.last_name}`
                       : `Instructor ID: ${course.instructor_id}`
                     }
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-gray-600">
                     {course.instructor?.email || 'Email not available'}
                   </p>
                 </div>
@@ -261,28 +268,28 @@ const CourseDetail: React.FC = () => {
             {/* Course Stats */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <TrendingUp className="h-5 w-5 text-gray-700" />
                   Course Progress
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-sm mb-2 text-gray-700 font-medium">
                     <span>Overall Progress</span>
-                    <span>0%</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold text-xs">0% Complete</span>
                   </div>
-                  <Progress value={0} className="h-2" />
+                  <Progress value={0} className="h-3 bg-gray-200" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="font-semibold">0</div>
-                    <div className="text-muted-foreground">Lectures</div>
+                    <div className="font-semibold text-gray-900">0</div>
+                    <div className="text-gray-600">Lectures</div>
                   </div>
                   <div>
-                    <div className="font-semibold">0</div>
-                    <div className="text-muted-foreground">Documents</div>
+                    <div className="font-semibold text-gray-900">0</div>
+                    <div className="text-gray-600">Documents</div>
                   </div>
                 </div>
               </CardContent>

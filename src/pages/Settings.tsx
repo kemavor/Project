@@ -15,6 +15,13 @@ import { Layout } from '@/components/Layout'
 import ImageCropper from '@/components/ImageCropper'
 import { StatsCardSkeleton } from '@/components/EnhancedSkeleton'
 import {
+  H1, H2, H3, H4, H5, H6,
+  LargeText, MediumText, NormalText, SmallText,
+  Button as DSButton,
+  Badge as DSBadge,
+  Card as DSCard
+} from '@/components/ui/design-system'
+import {
   User,
   Settings as SettingsIcon,
   Shield,
@@ -277,62 +284,102 @@ const Settings = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="min-h-screen bg-gray-50 p-6 space-y-6">
+        <div className="container mx-auto max-w-4xl space-y-6">
         <div className="space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+          {/* Enhanced Header */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-green-500 rounded-2xl">
+              <SettingsIcon className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <H1 className="text-black mb-1 font-bold text-4xl">Settings</H1>
+              <LargeText className="text-black font-semibold text-lg">Manage your account settings and preferences</LargeText>
+            </div>
           </div>
 
           {/* Settings Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid grid-cols-5 w-full max-w-md">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsList 
+              role="tablist" 
+              aria-orientation="horizontal" 
+              className="h-14 items-center justify-center text-muted-foreground grid w-full grid-cols-5 max-w-4xl bg-white/95 backdrop-blur-sm border border-white/30 rounded-2xl p-1 shadow-xl"
+            >
+              <TabsTrigger 
+                value="profile" 
+                className="whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow flex items-center justify-center gap-2 text-gray-700 hover:bg-blue-50/50 hover:text-blue-700 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 transition-all duration-300 rounded-xl font-semibold px-3 py-2 text-sm"
+              >
+                <User className="h-4 w-4" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preferences" 
+                className="whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow flex items-center justify-center gap-2 text-gray-700 hover:bg-blue-50/50 hover:text-blue-700 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 transition-all duration-300 rounded-xl font-semibold px-3 py-2 text-sm"
+              >
+                <Palette className="h-4 w-4" />
+                Preferences
+              </TabsTrigger>
               {user?.role === 'teacher' && (
-                <TabsTrigger value="streaming">Streaming</TabsTrigger>
+                <TabsTrigger 
+                  value="streaming" 
+                  className="whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow flex items-center justify-center gap-2 text-gray-700 hover:bg-blue-50/50 hover:text-blue-700 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 transition-all duration-300 rounded-xl font-semibold px-3 py-2 text-sm"
+                >
+                  <Video className="h-4 w-4" />
+                  Streaming
+                </TabsTrigger>
               )}
-              <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="account">Account</TabsTrigger>
+              <TabsTrigger 
+                value="security" 
+                className="whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow flex items-center justify-center gap-2 text-gray-700 hover:bg-blue-50/50 hover:text-blue-700 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 transition-all duration-300 rounded-xl font-semibold px-3 py-2 text-sm"
+              >
+                <Shield className="h-4 w-4" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger 
+                value="account" 
+                className="whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow flex items-center justify-center gap-2 text-gray-700 hover:bg-blue-50/50 hover:text-blue-700 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 transition-all duration-300 rounded-xl font-semibold px-3 py-2 text-sm"
+              >
+                <User className="h-4 w-4" />
+                Account
+              </TabsTrigger>
             </TabsList>
 
             {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-6">
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-black text-3xl font-bold">
+                    <User className="h-6 w-6 text-blue-600" />
                     Profile Information
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-black font-medium">
                     Update your profile information and how others see you
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Avatar Section */}
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
                       <AvatarImage src={profileData.avatar} />
-                      <AvatarFallback className="text-lg">
+                      <AvatarFallback className="text-lg text-blue-700 bg-blue-100 font-bold">
                         {profileData.first_name?.split(' ').map(n => n[0]).join('') || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-2">
                       <Button 
-                        variant="outline" 
                         size="sm"
                         onClick={() => document.getElementById('avatar-upload')?.click()}
                         disabled={avatarUploading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                       >
                         <Camera className="h-4 w-4 mr-2" />
                         {avatarUploading ? 'Uploading...' : 'Upload Photo'}
                       </Button>
                       <Button
-                        variant="outline"
                         size="sm"
                         onClick={() => setShowDefaultImages(!showDefaultImages)}
                         disabled={avatarUploading}
+                        className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                       >
                         <Image className="h-4 w-4 mr-2" />
                         {avatarUploading ? 'Loading...' : 'Choose Default'}
@@ -344,7 +391,7 @@ const Settings = () => {
                         className="hidden"
                         onChange={handleAvatarChange}
                       />
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-black font-medium">
                         JPG, PNG or GIF. Max size 2MB
                       </p>
                     </div>
@@ -352,8 +399,8 @@ const Settings = () => {
 
                   {/* Default Images Selection */}
                   {showDefaultImages && (
-                    <div className="mt-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
-                      <h4 className="text-sm font-medium mb-3">Choose Default Avatar</h4>
+                    <div className="mt-4 p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                      <h4 className="text-sm font-medium mb-3 text-black font-bold">Choose Default Avatar</h4>
                       <div className="grid grid-cols-3 gap-3">
                         {defaultImages.map((image) => (
                           <button
@@ -376,10 +423,9 @@ const Settings = () => {
                         ))}
                       </div>
                       <Button
-                        variant="ghost"
                         size="sm"
                         onClick={() => setShowDefaultImages(false)}
-                        className="mt-3"
+                        className="mt-3 bg-gray-600 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                       >
                         Cancel
                       </Button>
@@ -391,8 +437,9 @@ const Settings = () => {
                   {/* Profile Form */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="first_name">First Name</Label>
+                      <Label htmlFor="first_name" className="text-black font-bold">First Name</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="first_name"
                         value={profileData.first_name}
                         onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })}
@@ -401,8 +448,9 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="last_name">Last Name</Label>
+                      <Label htmlFor="last_name" className="text-black font-bold">Last Name</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="last_name"
                         value={profileData.last_name}
                         onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })}
@@ -411,8 +459,9 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email" className="text-black font-bold">Email Address</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="email"
                         type="email"
                         value={profileData.email}
@@ -422,8 +471,9 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone" className="text-black font-bold">Phone Number</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="phone"
                         value={profileData.phone}
                         onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
@@ -432,8 +482,9 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location" className="text-black font-bold">Location</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="location"
                         value={profileData.location}
                         onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
@@ -442,8 +493,9 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="website">Website</Label>
+                      <Label htmlFor="website" className="text-black font-bold">Website</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="website"
                         value={profileData.website}
                         onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
@@ -452,10 +504,10 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="bio">Bio</Label>
+                      <Label htmlFor="bio" className="text-black font-bold">Bio</Label>
                       <textarea
                         id="bio"
-                        className="w-full p-3 border rounded-md resize-none"
+                        className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                         rows={3}
                         value={profileData.bio}
                         onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
@@ -464,8 +516,9 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="age">Age</Label>
+                      <Label htmlFor="age" className="text-black font-bold">Age</Label>
                       <Input
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200"
                         id="age"
                         type="number"
                         min={1}
@@ -476,7 +529,7 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="sex">Sex/Gender</Label>
+                      <Label htmlFor="sex" className="text-black font-bold">Sex/Gender</Label>
                       <Select
                         value={profileData.sex}
                         onValueChange={(value) => setProfileData(prev => ({ ...prev, sex: value }))}
@@ -495,7 +548,11 @@ const Settings = () => {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={handleProfileUpdate} disabled={isLoading}>
+                    <Button 
+                      onClick={handleProfileUpdate} 
+                      disabled={isLoading}
+                      className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                    >
                       {isLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -510,28 +567,28 @@ const Settings = () => {
               </Card>
 
               {/* User Stats */}
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle>Learning Statistics</CardTitle>
-                  <CardDescription>Your progress and achievements</CardDescription>
+                  <CardTitle className="text-black">Learning Statistics</CardTitle>
+                  <CardDescription className="text-black">Your progress and achievements</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-200 hover:bg-blue-100 transition-all duration-200">
                       <div className="text-2xl font-bold text-blue-600">{loadingStats ? '...' : (userStats?.lectures_attended ?? 0)}</div>
-                      <div className="text-sm text-gray-600">Lectures Attended</div>
+                      <div className="text-sm text-black font-medium">Lectures Attended</div>
                     </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200 hover:bg-green-100 transition-all duration-200">
                       <div className="text-2xl font-bold text-green-600">{loadingStats ? '...' : (userStats?.flashcards_reviewed ?? 0)}</div>
-                      <div className="text-sm text-gray-600">Flashcards Reviewed</div>
+                      <div className="text-sm text-black font-medium">Flashcards Reviewed</div>
                     </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-center p-4 bg-purple-50 rounded-xl border border-purple-200 hover:bg-purple-100 transition-all duration-200">
                       <div className="text-2xl font-bold text-purple-600">{loadingStats ? '...' : `${Math.round((userStats?.quiz_average_score ?? 0))}%`}</div>
-                      <div className="text-sm text-gray-600">Quiz Average</div>
+                      <div className="text-sm text-black font-medium">Quiz Average</div>
                     </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <div className="text-center p-4 bg-orange-50 rounded-xl border border-orange-200 hover:bg-orange-100 transition-all duration-200">
                       <div className="text-2xl font-bold text-orange-600">{loadingStats ? '...' : (userStats?.learning_streak_days ?? 0)}</div>
-                      <div className="text-sm text-gray-600">Day Streak</div>
+                      <div className="text-sm text-black font-medium">Day Streak</div>
                     </div>
                   </div>
                 </CardContent>
@@ -540,21 +597,21 @@ const Settings = () => {
 
             {/* Preferences Tab */}
             <TabsContent value="preferences" className="space-y-6">
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-black font-bold text-xl">
+                    <Palette className="h-6 w-6 text-blue-600" />
                     Appearance
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-black font-medium">
                     Customize how VisionWare looks and feels
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Theme</Label>
-                      <p className="text-sm text-gray-500">Choose your preferred theme</p>
+                      <Label className="text-black font-bold">Theme</Label>
+                      <p className="text-sm text-black font-medium">Choose your preferred theme</p>
                     </div>
                     <Select
                       value={preferences.theme}
@@ -573,8 +630,8 @@ const Settings = () => {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Language</Label>
-                      <p className="text-sm text-gray-500">Select your preferred language</p>
+                      <Label className="text-black font-bold">Language</Label>
+                      <p className="text-sm text-black font-medium">Select your preferred language</p>
                     </div>
                     <Select
                       value={preferences.language}
@@ -594,21 +651,21 @@ const Settings = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-black font-bold text-xl">
+                    <Bell className="h-6 w-6 text-blue-600" />
                     Notifications
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-black font-medium">
                     Manage how you receive notifications
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Push Notifications</Label>
-                      <p className="text-sm text-gray-500">Receive notifications in your browser</p>
+                      <Label className="text-black font-bold">Push Notifications</Label>
+                      <p className="text-sm text-black font-medium">Receive notifications in your browser</p>
                     </div>
                     <Switch
                       checked={preferences.notifications}
@@ -618,8 +675,8 @@ const Settings = () => {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Email Updates</Label>
-                      <p className="text-sm text-gray-500">Receive course updates via email</p>
+                      <Label className="text-black font-bold">Email Updates</Label>
+                      <p className="text-sm text-black font-medium">Receive course updates via email</p>
                     </div>
                     <Switch
                       checked={preferences.emailUpdates}
@@ -630,7 +687,11 @@ const Settings = () => {
               </Card>
 
               <div className="flex justify-end">
-                <Button onClick={handlePreferencesUpdate} disabled={isLoading}>
+                <Button 
+                  onClick={handlePreferencesUpdate} 
+                  disabled={isLoading}
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -645,52 +706,59 @@ const Settings = () => {
 
             {/* Security Tab */}
             <TabsContent value="security" className="space-y-6">
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-black font-bold text-xl">
+                    <Lock className="h-6 w-6 text-blue-600" />
                     Change Password
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-black font-medium">
                     Update your password to keep your account secure
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Label htmlFor="currentPassword" className="text-black font-bold">Current Password</Label>
                     <Input
                       id="currentPassword"
                       type="password"
                       value={passwordData.currentPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                       placeholder="Enter current password"
+                      className="text-gray-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
+                    <Label htmlFor="newPassword" className="text-black font-bold">New Password</Label>
                     <Input
                       id="newPassword"
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                       placeholder="Enter new password"
+                      className="text-gray-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Label htmlFor="confirmPassword" className="text-black font-bold">Confirm New Password</Label>
                     <Input
                       id="confirmPassword"
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                       placeholder="Confirm new password"
+                      className="text-gray-900"
                     />
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={handlePasswordChange} disabled={isLoading}>
+                    <Button 
+                      onClick={handlePasswordChange} 
+                      disabled={isLoading}
+                      className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                    >
                       {isLoading ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -704,31 +772,34 @@ const Settings = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-black font-bold text-xl">
+                    <Shield className="h-6 w-6 text-blue-600" />
                     Account Security
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-black font-medium">
                     Manage your account security settings
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-blue-50/30 transition-all duration-200">
                     <div>
-                      <div className="font-medium">Two-Factor Authentication</div>
-                      <div className="text-sm text-gray-500">Add an extra layer of security</div>
+                      <div className="font-medium text-black font-bold">Two-Factor Authentication</div>
+                      <div className="text-sm text-black font-medium">Add an extra layer of security</div>
                     </div>
                     <Badge variant="outline">Coming Soon</Badge>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-blue-50/30 transition-all duration-200">
                     <div>
-                      <div className="font-medium">Login Sessions</div>
-                      <div className="text-sm text-gray-500">Manage active sessions</div>
+                      <div className="font-medium text-black font-bold">Login Sessions</div>
+                      <div className="text-sm text-black font-medium">Manage active sessions</div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                    >
                       View Sessions
                     </Button>
                   </div>
@@ -739,23 +810,23 @@ const Settings = () => {
             {/* Streaming Tab - Teachers Only */}
             {user?.role === 'teacher' && activeTab === 'streaming' && (
               <TabsContent value="streaming" className="space-y-6">
-                <Card>
+                <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Video className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-gray-900">
+                      <Video className="h-5 w-5 text-gray-700" />
                       Streaming Management
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-600">
                       Manage your live streaming settings and configurations
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Streaming Setup */}
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-blue-50/30 transition-all duration-200">
                         <div>
-                          <div className="font-medium">Streaming Architecture</div>
-                          <div className="text-sm text-gray-500">Choose your preferred streaming method</div>
+                          <div className="font-medium text-gray-900">Streaming Architecture</div>
+                          <div className="text-sm text-gray-600">Choose your preferred streaming method</div>
                         </div>
                         <Button 
                           variant="outline" 
@@ -767,10 +838,10 @@ const Settings = () => {
                         </Button>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-blue-50/30 transition-all duration-200">
                         <div>
-                          <div className="font-medium">Create Live Stream</div>
-                          <div className="text-sm text-gray-500">Start a new live streaming session</div>
+                          <div className="font-medium text-gray-900">Create Live Stream</div>
+                          <div className="text-sm text-gray-600">Start a new live streaming session</div>
                         </div>
                         <Button 
                           variant="outline" 
@@ -782,10 +853,10 @@ const Settings = () => {
                         </Button>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-blue-50/30 transition-all duration-200">
                         <div>
-                          <div className="font-medium">View My Streams</div>
-                          <div className="text-sm text-gray-500">Manage your existing live streams</div>
+                          <div className="font-medium text-gray-900">View My Streams</div>
+                          <div className="text-sm text-gray-600">Manage your existing live streams</div>
                         </div>
                         <Button 
                           variant="outline" 
@@ -802,13 +873,13 @@ const Settings = () => {
 
                     {/* Streaming Information */}
                     <div className="space-y-4">
-                      <h4 className="text-sm font-medium">Streaming Options</h4>
+                      <h4 className="text-sm font-medium text-gray-900">Streaming Options</h4>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-4 border rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <Monitor className="h-4 w-4 text-blue-500" />
-                            <span className="font-medium">Browser-Based Streaming</span>
+                            <span className="font-medium text-gray-900">Browser-Based Streaming</span>
                           </div>
                           <p className="text-sm text-gray-600 mb-3">
                             Stream directly from your browser using camera and microphone
@@ -824,7 +895,7 @@ const Settings = () => {
                         <div className="p-4 border rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <Video className="h-4 w-4 text-purple-500" />
-                            <span className="font-medium">Professional Broadcasting</span>
+                            <span className="font-medium text-gray-900">Professional Broadcasting</span>
                           </div>
                           <p className="text-sm text-gray-600 mb-3">
                             Use OBS Studio for professional-quality streaming
@@ -843,22 +914,20 @@ const Settings = () => {
 
                     {/* Quick Actions */}
                     <div className="space-y-4">
-                      <h4 className="text-sm font-medium">Quick Actions</h4>
+                      <h4 className="text-sm font-medium text-black font-bold">Quick Actions</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Button 
-                          variant="outline" 
                           size="sm"
                           onClick={() => navigate('/streaming-guide/mediasoup')}
-                          className="justify-start"
+                          className="justify-start bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                         >
                           <Wifi />
                           Browser Setup Guide
                         </Button>
                         <Button 
-                          variant="outline" 
                           size="sm"
                           onClick={() => navigate('/streaming-guide/rtmp')}
-                          className="justify-start"
+                          className="justify-start bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                         >
                           <Video />
                           OBS Setup Guide
@@ -872,22 +941,25 @@ const Settings = () => {
 
             {/* Account Tab */}
             <TabsContent value="account" className="space-y-6">
-              <Card>
+              <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Download className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-black font-bold text-xl">
+                    <Download className="h-6 w-6 text-blue-600" />
                     Data Export
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-black font-medium">
                     Download a copy of your data
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-black font-medium">
                       You can request a copy of all your data including courses, progress, and personal information.
                     </p>
-                    <Button onClick={handleDataExport} variant="outline">
+                    <Button 
+                      onClick={handleDataExport} 
+                      className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Request Data Export
                     </Button>
@@ -895,25 +967,28 @@ const Settings = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-red-200">
+              <Card className="border-red-200 bg-red-50/30">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-600">
-                    <Trash2 className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-red-700 font-bold text-xl">
+                    <Trash2 className="h-6 w-6 text-red-600" />
                     Danger Zone
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-red-600 font-medium">
                     Irreversible and destructive actions
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
+                  <Alert className="bg-red-100 border-red-300">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800 font-medium">
                       Once you delete your account, there is no going back. Please be certain.
                     </AlertDescription>
                   </Alert>
 
-                  <Button onClick={handleAccountDeletion} variant="destructive">
+                  <Button 
+                    onClick={handleAccountDeletion} 
+                    className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Account
                   </Button>
@@ -921,6 +996,7 @@ const Settings = () => {
               </Card>
             </TabsContent>
           </Tabs>
+        </div>
         </div>
       </div>
 

@@ -210,6 +210,42 @@ class NotificationService:
         )
 
     @staticmethod
+    def create_new_application_notification_for_teacher(
+        db: Session,
+        application_id: int
+    ) -> Optional[Notification]:
+        """Create notification for teacher when student submits new application"""
+        application = db.query(Application).filter(
+            Application.id == application_id).first()
+        if not application:
+            return None
+
+        course = db.query(Course).filter(
+            Course.id == application.course_id).first()
+        if not course:
+            return None
+            
+        student = db.query(User).filter(
+            User.id == application.student_id).first()
+        if not student:
+            return None
+
+        title = "New Course Application Received 📝"
+        message = f"{student.first_name} {student.last_name} ({student.username}) has applied for your course '{course.title}'. Please review the application in your teacher dashboard."
+        
+        return NotificationService.create_personalized_notification(
+            db=db,
+            user_id=course.instructor_id,
+            title=title,
+            message=message,
+            category="application",
+            notification_type="info",
+            priority="normal",
+            related_course_id=course.id,
+            related_application_id=application.id
+        )
+
+    @staticmethod
     def create_course_update_notification(
         db: Session,
         course_id: int,

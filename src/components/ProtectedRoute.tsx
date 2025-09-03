@@ -16,13 +16,26 @@ export function ProtectedRoute({
   requiredRole,
   allowedRoles = []
 }: ProtectedRouteProps) {
-  const { isAuthenticated, hasPermission, hasRole, user } = useAuth()
+  const { isAuthenticated, hasPermission, hasRole, user, isLoading } = useAuth()
   const location = useLocation()
 
   // Show loading spinner while checking authentication
+  if (isLoading) {
+    console.log('🔄 ProtectedRoute: Auth is loading...');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  // Only redirect to login after loading is complete and user is not authenticated
   if (!isAuthenticated) {
+    console.log('❌ ProtectedRoute: User not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />
   }
+
+  console.log('✅ ProtectedRoute: User authenticated, allowing access');
 
   // Helper function to get user role consistently
   const getUserRole = () => {

@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { useFlashcards } from '@/hooks/useFlashcards'
 import { useAuth } from '@/contexts/AuthContext'
-import { Layout } from '@/components/Layout'
 import {
   ChevronLeft,
   ChevronRight,
@@ -137,7 +136,6 @@ const Flashcards = () => {
   }
 
   return (
-    <Layout>
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
@@ -230,24 +228,31 @@ const Flashcards = () => {
 
       {/* Progress Bar */}
       <div className="space-y-2">
-        <div className="flex justify-between text-sm text-muted-foreground">
+        <div className="flex justify-between text-sm text-gray-700 font-medium">
           <span>Progress</span>
-          <span>{Math.round(progress)}%</span>
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-bold text-xs">{Math.round(progress)}% Complete</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={progress} className="h-3 bg-gray-200" />
       </div>
 
       {/* Control Buttons */}
       <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6">
-        <Button variant="outline" onClick={shuffleCards}>
+        <Button 
+          onClick={shuffleCards}
+          className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+        >
           <Shuffle className="h-4 w-4 mr-2" />
           Shuffle
         </Button>
-        <Button variant="outline">
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+        >
           <Play className="h-4 w-4 mr-2" />
           Auto Play
         </Button>
-        <Button variant="outline">
+        <Button 
+          className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+        >
           <BookmarkPlus className="h-4 w-4 mr-2" />
           Save Progress
         </Button>
@@ -324,9 +329,9 @@ const Flashcards = () => {
       {/* Navigation and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
         <Button
-          variant="outline"
           onClick={prevCard}
           disabled={currentCardIndex === 0}
+          className="bg-gray-600 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
           Previous
@@ -336,13 +341,15 @@ const Flashcards = () => {
           {showAnswer && (
             <>
               <Button
-                variant="outline"
                 onClick={markAsMastered}
                 disabled={masteredCards.has(currentCard.id) || currentCard.mastered}
+                className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ✓ Mark as Mastered
               </Button>
-              <Button variant="outline">
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+              >
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Review Again
               </Button>
@@ -351,9 +358,9 @@ const Flashcards = () => {
         </div>
 
         <Button
-          variant="outline"
           onClick={nextCard}
           disabled={currentCardIndex === flashcards.length - 1}
+          className="bg-gray-600 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
           <ChevronRight className="h-4 w-4 ml-2" />
@@ -398,7 +405,6 @@ const Flashcards = () => {
         </CardContent>
       </Card>
     </div>
-    </Layout>
   )
 }
 

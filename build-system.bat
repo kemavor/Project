@@ -2,7 +2,7 @@
 REM VisionWare System Architecture Compilation Script (Batch)
 REM This script compiles all components of the VisionWare system
 
-echo 🚀 Starting VisionWare System Architecture Compilation...
+echo Starting VisionWare System Architecture Compilation...
 
 REM Check if Node.js is installed
 node --version >nul 2>&1
@@ -144,14 +144,14 @@ if errorlevel 1 (
 )
 
 echo.
-echo 🎉 VisionWare System Architecture Compilation Completed Successfully!
+echo VisionWare System Architecture Compilation Completed Successfully!
 echo.
 echo [INFO] System components built:
-echo   ✅ Frontend (React + TypeScript + Vite)
-echo   ✅ Backend (FastAPI + Python)
-echo   ✅ Live Stream Server (Node.js RTMP)
-echo   ✅ MediaSoup Server (WebRTC)
-echo   ✅ Environment files
+echo   Frontend (React + TypeScript + Vite)
+echo   Backend (FastAPI + Python)
+echo   Live Stream Server (Node.js RTMP)
+echo   MediaSoup Server (WebRTC)
+echo   Environment files
 echo.
 echo [INFO] Next steps:
 echo   1. Update production.env with your configuration

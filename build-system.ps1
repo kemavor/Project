@@ -10,7 +10,7 @@ param(
 # Set error action preference
 $ErrorActionPreference = "Stop"
 
-Write-Host "🚀 Starting VisionWare System Architecture Compilation..." -ForegroundColor Cyan
+Write-Host "Starting VisionWare System Architecture Compilation..." -ForegroundColor Cyan
 
 # Function to print colored output
 function Write-Status {
@@ -270,15 +270,15 @@ function Main {
     # Run tests
     Run-Tests
     
-    Write-Success "🎉 VisionWare System Architecture Compilation Completed Successfully!"
+    Write-Success "VisionWare System Architecture Compilation Completed Successfully!"
     Write-Status "System components built:"
-    Write-Host "  ✅ Frontend (React + TypeScript + Vite)" -ForegroundColor Green
-    Write-Host "  ✅ Backend (FastAPI + Python)" -ForegroundColor Green
-    Write-Host "  ✅ Live Stream Server (Node.js RTMP)" -ForegroundColor Green
-    Write-Host "  ✅ MediaSoup Server (WebRTC)" -ForegroundColor Green
-    Write-Host "  ✅ Environment files" -ForegroundColor Green
-    Write-Host "  ✅ Docker images (if Docker available)" -ForegroundColor Green
-    Write-Host "  ✅ System tests" -ForegroundColor Green
+    Write-Host "  Frontend (React + TypeScript + Vite)" -ForegroundColor Green
+    Write-Host "  Backend (FastAPI + Python)" -ForegroundColor Green
+    Write-Host "  Live Stream Server (Node.js RTMP)" -ForegroundColor Green
+    Write-Host "  MediaSoup Server (WebRTC)" -ForegroundColor Green
+    Write-Host "  Environment files" -ForegroundColor Green
+    Write-Host "  Docker images (if Docker available)" -ForegroundColor Green
+    Write-Host "  System tests" -ForegroundColor Green
     
     Write-Status "Next steps:"
     Write-Host "  1. Update production.env with your configuration" -ForegroundColor Cyan

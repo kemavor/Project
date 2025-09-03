@@ -25,8 +25,8 @@ const VideoBackground: React.FC<VideoBackgroundProps> = ({ children, className =
         {/* Lighter overlay for better text readability */}
         <div className="absolute inset-0 bg-black/20"></div>
         
-        {/* Softer gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40"></div>
+        {/* Softer solid overlay */}
+        <div className="absolute inset-0 bg-black/20"></div>
       </div>
       
       {/* Content */}

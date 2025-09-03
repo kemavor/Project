@@ -10,6 +10,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, Application, EnrolledCourse } from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import { LoaderOne } from '@/components/ui/loader';
+import {
+  H1, H2, H3, H4, H5, H6,
+  LargeText, MediumText, NormalText, SmallText,
+  Button as DSButton,
+  Badge as DSBadge
+} from '@/components/ui/design-system';
 import {
   BookOpen,
   PlayCircle,
@@ -60,7 +67,7 @@ const MyCourses: React.FC = () => {
     
     try {
       setEnrolledCoursesLoading(true);
-      const response = await apiClient.getMyCourses();
+      const response = await apiClient.getEnrolledCourses();
       
       if (response.error) {
         toast.error(response.error);
@@ -86,16 +93,16 @@ const MyCourses: React.FC = () => {
               id: course.id,
               course: course,
               enrolled_at: course.created_at || new Date().toISOString(),
-              enrollment_status: 'enrolled',
+              enrollment_status: 'enrolled' as const,
               instructor: null
-            })) as EnrolledCourse[];
+            })) as unknown as EnrolledCourse[];
           }
         }
         
         // Check if new courses were enrolled
         if (processedCourses.length > previousEnrolledCount && previousEnrolledCount > 0) {
           const newCourses = processedCourses.length - previousEnrolledCount;
-          toast.success(`🎉 You've been approved for ${newCourses} new course${newCourses > 1 ? 's' : ''}!`);
+          toast.success(`You've been approved for ${newCourses} new course${newCourses > 1 ? 's' : ''}!`);
         }
         
         setEnrolledCourses(processedCourses);
@@ -119,7 +126,7 @@ const MyCourses: React.FC = () => {
       if (response.error) {
         toast.error(response.error);
       } else {
-        setApplications(response.data || []);
+        setApplications(Array.isArray(response.data) ? response.data : []);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to fetch applications');
@@ -142,15 +149,16 @@ const MyCourses: React.FC = () => {
         const newApplications = response.data || [];
         
         // Check for newly approved applications
-        newApplications.forEach((app: Application) => {
+        const applicationsArray = Array.isArray(newApplications) ? newApplications : [];
+        applicationsArray.forEach((app: Application) => {
           const existingApp = myApplications.find(existing => existing.id === app.id);
           if (existingApp && existingApp.status === 'pending' && app.status === 'approved') {
             const courseTitle = app.course?.title || `Course ${app.course_id}`;
-            toast.success(`🎉 Your application for "${courseTitle}" has been approved!`);
+            toast.success(`Your application for "${courseTitle}" has been approved!`);
           }
         });
         
-        setMyApplications(newApplications);
+        setMyApplications(applicationsArray);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to fetch applications');
@@ -201,13 +209,13 @@ const MyCourses: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return <Badge variant="secondary" className="badge-solid-warning"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
       case 'approved':
-        return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+        return <Badge variant="default" className="badge-solid-success"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="bg-red-100 text-red-800"><X className="w-3 h-3 mr-1" />Rejected</Badge>;
+        return <Badge variant="destructive" className="badge-solid-destructive"><X className="w-3 h-3 mr-1" />Rejected</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="border-gray-300 text-gray-700">{status}</Badge>;
     }
   };
 
@@ -244,10 +252,10 @@ const MyCourses: React.FC = () => {
   if (user?.role === 'teacher') {
     return (
       <Layout>
-        <div className="p-6 space-y-6">
+        <div className="container mx-auto px-6 py-6 space-y-6">
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Redirecting to teacher courses...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 mx-auto mb-4"></div>
+            <p className="text-gray-600">Redirecting to teacher courses...</p>
           </div>
         </div>
       </Layout>
@@ -257,22 +265,22 @@ const MyCourses: React.FC = () => {
   // Student view - return the student interface
   return (
     <Layout>
-      <div className="p-6 space-y-6">
+      <div className="min-h-screen bg-gray-50 p-6 space-y-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
+              <div className="p-3 bg-gray-800 rounded-2xl">
                 <BookOpen className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-1">My Courses</h1>
-                <p className="text-muted-foreground text-lg">
+                <H1 className="text-black mb-2 font-bold text-4xl">My Courses</H1>
+                <LargeText className="text-black font-semibold text-lg">
                   Continue your learning journey with your enrolled courses
-                </p>
+                </LargeText>
               </div>
             </div>
-            <Button
+            <DSButton
               variant="outline"
               onClick={() => {
                 fetchEnrolledCourses();
@@ -283,53 +291,53 @@ const MyCourses: React.FC = () => {
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
-            </Button>
+            </DSButton>
           </div>
         </div>
 
         {/* Course Progress Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-gray-900 font-semibold text-lg">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
                 Overall Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">70%</div>
-              <Progress value={70} className="h-2 mb-2" />
-              <p className="text-sm text-muted-foreground">
+              <div className="text-3xl font-bold mb-3 text-gray-900">70%</div>
+              <Progress value={70} className="h-3 mb-3" />
+              <p className="text-sm text-gray-600 font-medium">
                 25 of 37 lectures completed across all courses
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-gray-900 font-semibold text-lg">
+                <Clock className="h-5 w-5 text-green-600" />
                 Study Time
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">24h</div>
-              <p className="text-sm text-muted-foreground">
+              <div className="text-3xl font-bold mb-3 text-gray-900">24h</div>
+              <p className="text-sm text-gray-600 font-medium">
                 This week • 3.4h average per day
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-gray-900 font-semibold text-lg">
+                <Target className="h-5 w-5 text-purple-600" />
                 Active Courses
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-2">{enrolledCourses.length}</div>
-              <p className="text-sm text-muted-foreground">
+              <div className="text-3xl font-bold mb-3 text-gray-900">{enrolledCourses.length}</div>
+              <p className="text-sm text-gray-600 font-medium">
                 Currently enrolled courses
               </p>
             </CardContent>
@@ -337,18 +345,18 @@ const MyCourses: React.FC = () => {
         </div>
 
         {/* Enrolled Courses */}
-        <Card>
+        <Card className="bg-white border border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-gray-900 font-semibold text-xl">
+              <BookOpen className="h-5 w-5 text-blue-600" />
               Enrolled Courses
             </CardTitle>
-            <CardDescription>Your current course enrollments and progress</CardDescription>
+            <CardDescription className="text-gray-600 font-medium">Your current course enrollments and progress</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {enrolledCoursesLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <LoaderOne size="lg" className="mx-auto mb-4" />
                 <p className="text-muted-foreground">Loading enrolled courses...</p>
               </div>
             ) : enrolledCourses.length === 0 ? (
@@ -356,7 +364,10 @@ const MyCourses: React.FC = () => {
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No enrolled courses</h3>
                 <p className="text-gray-600 mb-4">You haven't enrolled in any courses yet</p>
-                <Button onClick={() => navigate('/courses')}>
+                <Button 
+                  onClick={() => navigate('/courses')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                >
                   <BookOpen className="h-4 w-4 mr-2" />
                   Browse Courses
                 </Button>
@@ -371,20 +382,20 @@ const MyCourses: React.FC = () => {
                   }
                   
                   return (
-                    <div key={enrolledCourse.course.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <Card key={enrolledCourse.course.id} className="p-6 hover:shadow-lg transition-all duration-200 border border-gray-200 bg-white hover:-translate-y-1">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
                             {enrolledCourse.course.title || 'Untitled Course'}
                           </h3>
-                          <p className="text-gray-600 mb-3">{enrolledCourse.course.description || 'No description available'}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <User className="w-4 h-4" />
+                          <p className="text-gray-700 mb-4 font-medium leading-relaxed">{enrolledCourse.course.description || 'No description available'}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 font-medium">
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-gray-500" />
                               <span>{enrolledCourse.instructor?.first_name} {enrolledCourse.instructor?.last_name || 'Unknown Instructor'}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-500" />
                               <span>Enrolled {formatDate(enrolledCourse.enrolled_at || enrolledCourse.enrollment_date || new Date().toISOString())}</span>
                             </div>
                           </div>
@@ -394,6 +405,7 @@ const MyCourses: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/courses/${enrolledCourse.course.id}`)}
+                            className="bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View Course
@@ -402,13 +414,14 @@ const MyCourses: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/courses/${enrolledCourse.course.id}/documents`)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             Documents
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -417,18 +430,18 @@ const MyCourses: React.FC = () => {
         </Card>
 
         {/* My Applications */}
-        <Card>
+        <Card className="bg-white border border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-gray-900 font-semibold text-xl">
+              <ClipboardList className="h-5 w-5 text-orange-600" />
               My Applications
             </CardTitle>
-            <CardDescription>Track your course applications and their status</CardDescription>
+            <CardDescription className="text-gray-600 font-medium">Track your course applications and their status</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {myApplicationsLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <LoaderOne size="lg" className="mx-auto mb-4" />
                 <p className="text-muted-foreground">Loading applications...</p>
               </div>
             ) : myApplications.length === 0 ? (
@@ -436,7 +449,10 @@ const MyCourses: React.FC = () => {
                 <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No applications</h3>
                 <p className="text-gray-600 mb-4">You haven't applied to any courses yet</p>
-                <Button onClick={() => navigate('/courses')}>
+                <Button 
+                  onClick={() => navigate('/courses')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                >
                   <BookOpen className="h-4 w-4 mr-2" />
                   Browse Courses
                 </Button>
@@ -444,17 +460,17 @@ const MyCourses: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {myApplications.map((application) => (
-                  <div key={application.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <Card key={application.id} className="p-6 hover:shadow-lg transition-all duration-200 border border-gray-200 bg-white hover:-translate-y-1">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="text-lg font-semibold text-gray-900">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h4 className="text-xl font-bold text-gray-900 leading-tight">
                             {application.course?.title || `Course ${application.course_id}`}
                           </h4>
                           {getStatusBadge(application.status)}
                         </div>
-                        <p className="text-gray-600 mb-3">{application.motivation_statement}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <p className="text-gray-700 mb-4 font-medium leading-relaxed">{application.motivation_statement}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 font-medium">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             <span>Applied {formatDate(application.created_at)}</span>
@@ -468,7 +484,7 @@ const MyCourses: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}

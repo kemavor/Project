@@ -1,10 +1,33 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchQuizzes, fetchCourseQuizzes } from '../lib/api';
+import { apiClient } from '../lib/api';
 
+export function useEnrolledCoursesWithLectures() {
+  return useQuery({ 
+    queryKey: ['enrolledCoursesWithLectures'], 
+    queryFn: () => apiClient.getEnrolledCoursesWithLectures() 
+  });
+}
+
+export function useStudentProgress() {
+  return useQuery({ 
+    queryKey: ['studentProgress'], 
+    queryFn: () => apiClient.getStudentProgress() 
+  });
+}
+
+export function useGeneratedQuestions(streamId: number) {
+  return useQuery({ 
+    queryKey: ['generatedQuestions', streamId], 
+    queryFn: () => apiClient.getGeneratedQuestions(streamId), 
+    enabled: !!streamId 
+  });
+}
+
+// Legacy hooks for backwards compatibility
 export function useQuizzes() {
-  return useQuery({ queryKey: ['quizzes'], queryFn: fetchQuizzes });
+  return { data: [], isLoading: false, error: null };
 }
 
 export function useCourseQuizzes(courseId: number) {
-  return useQuery({ queryKey: ['courseQuizzes', courseId], queryFn: () => fetchCourseQuizzes(courseId), enabled: !!courseId });
+  return { data: [], isLoading: false, error: null };
 } 

@@ -4,16 +4,19 @@ import type { Transcription } from './api'
 // Change this to your backend IP if not running frontend and backend on the same machine
 // Use secure WebSocket if available, fallback to regular WebSocket
 const getWebSocketUrl = () => {
-  // In development, use the Vite proxy for WebSocket connections
+  // Always use the backend WebSocket URL
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  
   if (import.meta.env.DEV) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}`;
+    // In development, explicitly use backend port
+    return `${protocol}//localhost:8000/ws`;
   }
   
   // In production, use the environment variable or default to backend
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return import.meta.env.VITE_WS_URL || `${protocol}//localhost:8000`;
+  return import.meta.env.VITE_WS_URL || `${protocol}//localhost:8000/ws`;
 };
+// Temporarily disable live WS during demo to avoid auth/token issues
+const WS_ENABLED = false;
 const WS_URL = getWebSocketUrl();
 
 export interface WebSocketEvents {
@@ -162,20 +165,16 @@ class WebSocketService {
   private eventHandlers = new Map<string, Set<Function>>()
 
   constructor() {
-    // Check for existing auth token on initialization
-    this.authToken = localStorage.getItem('access_token')
-    this.isAuthenticated = !!this.authToken
-
-    if (this.isAuthenticated) {
-      this.connect()
-    }
+    // Note: WebSocket authentication will be handled externally
+    // The token will be provided when needed via setAuthToken()
+    this.authToken = null
+    this.isAuthenticated = false
   }
 
   // Authentication methods
   setAuthToken(token: string) {
     this.authToken = token
     this.isAuthenticated = true
-    localStorage.setItem('access_token', token)
     
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       // Reconnect with new token
@@ -207,6 +206,10 @@ class WebSocketService {
   }
 
   private connect() {
+    if (!WS_ENABLED) {
+      console.log('WebSocket: disabled');
+      return;
+    }
     // Only connect if authenticated
     if (!this.isAuthenticated || !this.authToken) {
       console.log('WebSocket: Not authenticated, skipping connection')
@@ -220,8 +223,8 @@ class WebSocketService {
     }
 
     try {
-    // Add auth token to WebSocket URL
-      const wsUrl = `${WS_URL}/ws/?token=${this.authToken}`
+      // Add auth token to WebSocket URL - FIXED: Remove extra slash
+      const wsUrl = `${WS_URL}?token=${this.authToken}`
       
       // Validate the WebSocket URL before creating connection
       if (!this.validateWebSocketUrl(wsUrl)) {
@@ -229,14 +232,19 @@ class WebSocketService {
         return;
       }
       
-      console.log('WebSocket: Attempting to connect to:', wsUrl)
-    this.socket = new WebSocket(wsUrl)
+      console.log('WebSocket: Attempting to connect to:', wsUrl.replace(/token=.*/, 'token=***'))
+      
+      // Create WebSocket with explicit browser compatibility options
+      this.socket = new WebSocket(wsUrl)
+      
+      // Set binary type for better browser compatibility
+      this.socket.binaryType = 'arraybuffer'
 
-    this.setupEventListeners()
+      this.setupEventListeners()
     } catch (error) {
       console.error('WebSocket: Failed to create connection:', error)
-      // Don't show error toast for WebSocket connection failures - they shouldn't affect user data
-      // toast.error('Failed to connect to real-time services')
+      // Log detailed error for debugging
+      console.error('WebSocket: Error details:', error.toString())
     }
   }
 
@@ -280,7 +288,21 @@ class WebSocketService {
 
     this.socket.onerror = (error) => {
       console.error('WebSocket error:', error)
-      // Don't automatically reconnect on error, let onclose handle it
+      console.error('WebSocket error event details:', {
+        type: error.type,
+        target: error.target,
+        readyState: this.socket?.readyState,
+        url: this.socket?.url?.replace(/token=.*/, 'token=***')
+      })
+      
+      // Check for common error patterns
+      if (this.socket?.readyState === WebSocket.CLOSED) {
+        console.error('WebSocket: Connection was closed immediately - possible causes:')
+        console.error('- Server rejected connection (invalid token, origin, etc.)')
+        console.error('- Network connectivity issues')
+        console.error('- Browser security policies')
+        console.error('- Server not running or WebSocket endpoint not available')
+      }
     }
 
     this.socket.onmessage = (event) => {
@@ -319,14 +341,14 @@ class WebSocketService {
   }
 
   // Event handling
-  on<T extends keyof WebSocketEvents>(event: T, callback: WebSocketEvents[T]) {
+  on<T extends keyof WebSocketEvents>(event: T, callback: (data: any) => void) {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, new Set())
     }
     this.eventHandlers.get(event)!.add(callback as Function)
   }
 
-  off<T extends keyof WebSocketEvents>(event: T, callback: WebSocketEvents[T]) {
+  off<T extends keyof WebSocketEvents>(event: T, callback: (data: any) => void) {
     const listeners = this.eventHandlers.get(event)
     if (listeners) {
       listeners.delete(callback as Function)

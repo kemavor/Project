@@ -16,12 +16,17 @@ async def get_user_notifications(
 ):
     """Get all notifications for the current user"""
     try:
+        print(f"✅ NOTIFICATIONS: Successfully authenticated user: {current_user.username} (ID: {current_user.id}, Role: {current_user.role})")
         notifications = db.query(Notification).filter(
             Notification.user_id == current_user.id
         ).order_by(Notification.created_at.desc()).all()
 
+        print(f"📧 NOTIFICATIONS: Found {len(notifications)} notifications for user {current_user.username}")
         return [NotificationResponse.model_validate(notification) for notification in notifications]
     except Exception as e:
+        print(f"❌ NOTIFICATIONS: Error fetching notifications for user {getattr(current_user, 'username', 'unknown')}: {str(e)}")
+        import traceback
+        print(f"❌ NOTIFICATIONS: Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch notifications: {str(e)}"

@@ -64,11 +64,23 @@ def upload_to_s3(file_content: bytes, s3_key: str, content_type: str) -> str:
     try:
         # Check if S3 client is available
         if s3_client is None:
-            print("📁 S3 not configured, using local storage")
+            print("S3 not configured, using local storage")
             return upload_to_local_storage(file_content, s3_key, content_type)
 
-        # Try S3 upload
-        s3_client.put_object(
+        # Try S3 upload with timeout configuration
+        import botocore.config
+        config = botocore.config.Config(
+            read_timeout=60,
+            connect_timeout=10,
+            retries={'max_attempts': 2}
+        )
+        s3_client_with_timeout = boto3.client(
+            's3',
+            config=config,
+            region_name=settings.aws_region
+        )
+        
+        s3_client_with_timeout.put_object(
             Bucket=settings.s3_bucket_name,
             Key=s3_key,
             Body=file_content,
@@ -78,15 +90,15 @@ def upload_to_s3(file_content: bytes, s3_key: str, content_type: str) -> str:
 
         # Generate S3 URL
         s3_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_region}.amazonaws.com/{s3_key}"
-        print(f"✅ File uploaded to S3: {s3_url}")
+        print(f"SUCCESS: File uploaded to S3: {s3_url}")
         return s3_url
     except ClientError as e:
-        print(f"❌ S3 upload failed: {e}")
-        print("📁 Falling back to local storage")
+        print(f"S3 upload failed: {e}")
+        print("Falling back to local storage")
         return upload_to_local_storage(file_content, s3_key, content_type)
     except Exception as e:
-        print(f"❌ Unexpected error in S3 upload: {e}")
-        print("📁 Falling back to local storage")
+        print(f"Unexpected error in S3 upload: {e}")
+        print("Falling back to local storage")
         return upload_to_local_storage(file_content, s3_key, content_type)
 
 
@@ -160,12 +172,12 @@ async def upload_course_document(
             detail="No file provided"
         )
 
-    # Check file size (max 50MB)
+    # Check file size (max 25MB to prevent connection timeouts)
     file_content = await file.read()
-    if len(file_content) > 50 * 1024 * 1024:  # 50MB
+    if len(file_content) > 25 * 1024 * 1024:  # 25MB
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size too large. Maximum size is 50MB"
+            detail="File size too large. Maximum size is 25MB"
         )
 
     # Get file metadata

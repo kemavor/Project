@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionWare Stream Viewer - Test</title>
+    <script src="https://unpkg.com/hls.js@latest"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 800px; margin: 0 auto; }
+        video { width: 100%; max-width: 640px; height: auto; background: #000; }
+        .stream-info { background: #333; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .status { padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .status.live { background: #28a745; }
+        .status.offline { background: #dc3545; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 VisionWare RTMP Stream Viewer</h1>
+        
+        <div class="stream-info">
+            <h3>Stream Information</h3>
+            <p><strong>RTMP Server:</strong> rtmp://localhost:1936/live</p>
+            <p><strong>Test Stream Key:</strong> 170be19a-d8c5-4572-b167-5afe5071c008</p>
+            <p><strong>HLS URL:</strong> http://localhost:8081/hls/170be19a-d8c5-4572-b167-5afe5071c008/index.m3u8</p>
+        </div>
+
+        <div id="status" class="status offline">Stream Status: Checking...</div>
+
+        <video id="video" controls muted autoplay>
+            <p>Your browser doesn't support HTML5 video.</p>
+        </video>
+
+        <div style="margin: 20px 0;">
+            <button onclick="loadStream()">🔄 Reload Stream</button>
+            <button onclick="checkStatus()">📊 Check Status</button>
+            <button onclick="openInVLC()">🎬 Open in VLC</button>
+        </div>
+
+        <div id="debug" style="background: #2a2a2a; padding: 15px; border-radius: 5px; margin: 20px 0; font-family: monospace; font-size: 12px;">
+            <h4>Debug Information:</h4>
+            <div id="debugOutput">Ready to stream...</div>
+        </div>
+    </div>
+
+    <script>
+        const streamKey = '170be19a-d8c5-4572-b167-5afe5071c008';
+        const hlsUrl = `http://localhost:8081/hls/${streamKey}/index.m3u8`;
+        const video = document.getElementById('video');
+        const statusEl = document.getElementById('status');
+        const debugEl = document.getElementById('debugOutput');
+        
+        let hls;
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugEl.innerHTML += `<br>[${timestamp}] ${message}`;
+            console.log(message);
+        }
+
+        function updateStatus(isLive, message) {
+            statusEl.className = `status ${isLive ? 'live' : 'offline'}`;
+            statusEl.textContent = `Stream Status: ${message}`;
+        }
+
+        function loadStream() {
+            log('Loading stream: ' + hlsUrl);
+            
+            if (Hls.isSupported()) {
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                hls = new Hls({
+                    debug: false,
+                    enableWorker: false,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+                
+                hls.loadSource(hlsUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    log('✅ HLS manifest loaded successfully');
+                    updateStatus(true, 'Live Stream Active');
+                    video.play();
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    log(`❌ HLS Error: ${data.type} - ${data.details}`);
+                    if (data.fatal) {
+                        updateStatus(false, 'Stream Error - ' + data.details);
+                    }
+                });
+                
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = hlsUrl;
+                video.addEventListener('loadedmetadata', () => {
+                    log('✅ Native HLS support - stream loaded');
+                    updateStatus(true, 'Live Stream Active (Native)');
+                });
+            } else {
+                log('❌ HLS not supported in this browser');
+                updateStatus(false, 'HLS Not Supported');
+            }
+        }
+
+        function checkStatus() {
+            log('Checking stream status...');
+            fetch('http://localhost:8081/streams')
+                .then(response => response.json())
+                .then(data => {
+                    log(`📊 Active streams: ${data.totalStreams}`);
+                    const stream = data.activeStreams.find(s => s.streamKey === streamKey);
+                    if (stream) {
+                        log(`✅ Stream found: ${stream.viewers} viewers, HLS ready: ${stream.hlsReady}`);
+                        updateStatus(stream.hlsReady, `Live - ${stream.viewers} viewers`);
+                    } else {
+                        log('ℹ️ Stream not currently active');
+                        updateStatus(false, 'Waiting for Stream');
+                    }
+                })
+                .catch(error => {
+                    log('❌ Failed to check status: ' + error.message);
+                });
+        }
+
+        function openInVLC() {
+            const vlcUrl = `vlc://${hlsUrl}`;
+            log('Opening in VLC: ' + vlcUrl);
+            window.open(vlcUrl, '_blank');
+        }
+
+        // Auto-check status every 5 seconds
+        setInterval(checkStatus, 5000);
+        
+        // Load stream on page load
+        window.onload = () => {
+            log('🚀 VisionWare Stream Viewer initialized');
+            checkStatus();
+            setTimeout(loadStream, 2000); // Wait 2 seconds then try to load
+        };
+    </script>
+</body>
+</html>

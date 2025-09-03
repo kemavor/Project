@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { apiClient, Notification } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 interface NotificationsPanelProps {
   onNotificationUpdate?: () => void;
@@ -20,16 +20,32 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onNotificationU
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const fetchNotifications = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('👤 No user available for notifications fetch');
+      return;
+    }
+    
+    // Check if we have valid authentication
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('🔑 No access token available for notifications fetch');
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('📧 Fetching notifications for user:', user.username);
       const response = await apiClient.getNotifications();
       
       if (response.error) {
         console.error('Failed to fetch notifications:', response.error);
+        // Don't show error toast for authentication issues during startup
+        if (!response.error.includes('log in')) {
+          toast.error('Failed to load notifications');
+        }
       } else {
         setNotifications(Array.isArray(response.data) ? response.data : []);
+        console.log('✅ Loaded', response.data?.length || 0, 'notifications');
       }
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -138,10 +154,10 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onNotificationU
   };
 
   return (
-    <Card className="w-80 shadow-lg border border-gray-200">
-      <CardHeader className="pb-3">
+    <Card className="w-80 shadow-lg border border-gray-200 bg-white !bg-white">
+      <CardHeader className="pb-3 bg-white">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Notifications</CardTitle>
+          <CardTitle className="text-lg text-black font-bold">Notifications</CardTitle>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -154,18 +170,18 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onNotificationU
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-80">
-          <div className="p-2 space-y-2">
+      <CardContent className="p-0 bg-white">
+        <ScrollArea className="h-80 bg-white">
+          <div className="p-2 space-y-2 bg-white">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <p className="text-sm text-gray-500">Loading notifications...</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center bg-white">
+                <p className="text-sm text-black font-medium">Loading notifications...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Bell className="h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">No notifications</p>
-                <p className="text-xs text-gray-400">You're all caught up!</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center bg-white">
+                <Bell className="h-8 w-8 text-gray-600 mb-2" />
+                <p className="text-sm text-black font-medium">No notifications</p>
+                <p className="text-xs text-gray-700">You're all caught up!</p>
               </div>
             ) : (
               notifications.map((notification) => (
@@ -182,17 +198,17 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onNotificationU
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-black">
                           {notification.title}
                         </p>
                         <div className="flex items-center space-x-1">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span className="text-xs text-gray-500">
+                          <Clock className="h-3 w-3 text-gray-600" />
+                          <span className="text-xs text-gray-700">
                             {formatTimeAgo(notification.created_at)}
                           </span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-800 mt-1">
                         {notification.message}
                       </p>
                       {!notification.read && (
@@ -209,11 +225,11 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ onNotificationU
           </div>
         </ScrollArea>
         {notifications.length > 0 && (
-          <div className="p-3 border-t bg-gray-50">
+          <div className="p-3 border-t bg-white">
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-xs text-gray-600 hover:text-gray-700"
+              className="w-full text-xs text-black hover:text-gray-700 font-medium"
             >
               View all notifications
             </Button>

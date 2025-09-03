@@ -27,7 +27,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
     primary: 'text-blue-500',
     secondary: 'text-gray-500',
     white: 'text-white',
-    gradient: 'text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500'
+    gradient: 'text-transparent bg-clip-text bg-gray-800'
   };
 
   const renderDotsAnimation = () => (
@@ -47,9 +47,9 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
 
   const renderMorphAnimation = () => (
     <div className={`${sizeClasses[size]} relative`}>
-      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse" />
+      <div className="absolute inset-0 rounded-lg bg-gray-800 animate-pulse" />
       <div className="absolute inset-1 rounded-md bg-white animate-ping" />
-      <div className="absolute inset-2 rounded-sm bg-gradient-to-r from-blue-500 to-purple-500 animate-spin" />
+      <div className="absolute inset-2 rounded-sm bg-gray-600 animate-spin" />
     </div>
   );
 
@@ -57,7 +57,7 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
     <div className="w-full max-w-xs">
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div
-          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300 ease-out"
+          className="bg-gray-800 h-2 rounded-full transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>

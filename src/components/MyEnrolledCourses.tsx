@@ -42,7 +42,7 @@ export const MyEnrolledCourses: React.FC = () => {
             </p>
             <a
               href="/courses"
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+              className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
             >
               Browse Courses
             </a>

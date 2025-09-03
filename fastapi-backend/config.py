@@ -19,9 +19,15 @@ class Settings(BaseSettings):
         "SECRET_KEY", "your-super-secret-key-change-this-in-production")
     algorithm: str = "HS256"
     access_token_expire_minutes: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
     refresh_token_expire_days: int = int(
         os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    
+    # Enhanced security settings
+    VERIFY_TOKEN_CONTEXT: bool = os.getenv("VERIFY_TOKEN_CONTEXT", "false").lower() == "true"
+    MAX_LOGIN_ATTEMPTS: int = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
+    LOGIN_LOCKOUT_MINUTES: int = int(os.getenv("LOGIN_LOCKOUT_MINUTES", "15"))
+    REQUIRE_PASSWORD_COMPLEXITY: bool = os.getenv("REQUIRE_PASSWORD_COMPLEXITY", "true").lower() == "true"
 
     # CORS - Environment-aware configuration
     allowed_origins: List[str] = [
@@ -49,7 +55,10 @@ class Settings(BaseSettings):
     aws_access_key_id: str = os.getenv("AWS_ACCESS_KEY_ID", "")
     aws_secret_access_key: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
     aws_region: str = os.getenv("AWS_REGION", "us-east-1")
-    s3_bucket_name: str = os.getenv("S3_BUCKET_NAME", "visionware-documents")
+    s3_bucket_name: str = os.getenv("S3_BUCKET_NAME", "visionware-lecture-courses")
+    
+    # Video storage configuration (separate from documents)
+    s3_video_bucket_name: str = os.getenv("S3_VIDEO_BUCKET_NAME", "visionware-lecture-videos")
 
     # Use IAM roles by default (EC2 best practice)
     # Set to False only for local development with access keys

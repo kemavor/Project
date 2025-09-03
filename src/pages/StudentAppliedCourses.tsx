@@ -7,6 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { CourseCardSkeleton } from '../components/EnhancedSkeleton';
+import {
+  H1, H2, H3, H4, H5, H6,
+  LargeText, MediumText, NormalText, SmallText,
+  Button as DSButton,
+  Badge as DSBadge,
+  Card as DSCard
+} from '../components/ui/design-system';
 import { 
   BookOpen, 
   Download, 
@@ -288,8 +295,8 @@ const StudentAppliedCourses: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">Only students can access this page.</p>
+            <H2 className="text-gray-900 mb-2">Access Denied</H2>
+            <NormalText className="text-gray-600">Only students can access this page.</NormalText>
           </div>
         </div>
       </Layout>
@@ -330,21 +337,21 @@ const StudentAppliedCourses: React.FC = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-6 py-6">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+              <div className="p-3 bg-gray-800 rounded-2xl shadow-lg">
                 <BookOpen className="h-10 w-10 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <H1 className="text-gray-900 dark:text-white mb-2">
                   My Applied Courses
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                </H1>
+                <LargeText className="text-gray-600 dark:text-gray-400">
                   View your course applications and access course materials
-                </p>
+                </LargeText>
               </div>
             </div>
           </div>

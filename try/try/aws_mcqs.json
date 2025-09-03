@@ -1,0 +1,52 @@
+[
+    {
+        "question": "What is Amazon S3 used for?",
+        "options": [
+            "Making complex database queries",
+            "Running distributed workflows",
+            "Sending emails",
+            "Storing and retrieving data at any time from anywhere on the web"
+        ],
+        "answer": "Storing and retrieving data at any time from anywhere on the web"
+    },
+    {
+        "question": "What is AWS Lambda?",
+        "options": [
+            "A compute service",
+            "A database service",
+            "A messaging service",
+            "A virtual file system"
+        ],
+        "answer": "A compute service"
+    },
+    {
+        "question": "What does Amazon RDS stand for?",
+        "options": [
+            "Relational Database Service",
+            "Random Data Storage",
+            "Redundant Data System",
+            "Regional Distribution Service"
+        ],
+        "answer": "Relational Database Service"
+    },
+    {
+        "question": "Which of the following is a benefit of AWS CloudFormation?",
+        "options": [
+            "Billing management",
+            "Content delivery network",
+            "Application auto-scaling",
+            "Infrastructure as code"
+        ],
+        "answer": "Infrastructure as code"
+    },
+    {
+        "question": "What does Amazon EC2 provide?",
+        "options": [
+            "Virtual servers in the cloud",
+            "Object storage service",
+            "Content delivery network service",
+            "DDoS mitigation service"
+        ],
+        "answer": "Virtual servers in the cloud"
+    }
+]

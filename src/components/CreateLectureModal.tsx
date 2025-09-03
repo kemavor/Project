@@ -154,6 +154,8 @@ export function CreateLectureModal({ isOpen, onClose, onSuccess }: CreateLecture
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
+              name="title"
+              autoComplete="off"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Enter lecture title"

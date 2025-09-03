@@ -1,0 +1,109 @@
+# MediaMTX configuration for VisionWare RTMP-to-HLS streaming
+# This configuration sets up MediaMTX to receive RTMP streams from OBS
+# and transcode them to HLS for web browser playback
+
+# General server settings
+logLevel: info
+logDestinations: [stdout]
+logFile: mediamtx.log
+
+# API settings for remote control
+api: yes
+apiAddress: 127.0.0.1:9997
+
+# Metrics (optional for monitoring)
+metrics: yes
+metricsAddress: 127.0.0.1:9998
+
+# RTMP server settings - receives OBS streams
+rtmpAddress: :1936
+rtmpEncryption: "no"
+rtmpServerKey: server.key
+rtmpServerCert: server.crt
+
+# HLS settings for web playback
+hlsAddress: :8081
+hlsEncryption: no
+hlsServerKey: server.key  
+hlsServerCert: server.crt
+hlsAlwaysRemux: no
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+hlsAllowOrigin: "*"
+
+# WebRTC settings (disabled for this setup)
+webrtcAddress: :8889
+webrtcEncryption: no
+webrtcServerKey: server.key
+webrtcServerCert: server.crt
+webrtcAllowOrigin: "*"
+
+# Recording settings (can record to files if needed)
+recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f.mp4
+recordFormat: mp4
+recordPartDuration: 1s
+recordSegmentDuration: 3600s
+
+# Path settings - define how streams are handled
+paths:
+  # Default path settings
+  ~^.*$:
+    # Source can be RTMP publishers or other sources
+    source: publisher
+    sourceProtocol: automatic
+    
+    # Allow publishing via RTMP
+    publishUser: ""
+    publishPass: ""
+    publishIPs: []
+    
+    # Allow reading via any protocol
+    readUser: ""
+    readPass: ""
+    readIPs: []
+    
+    # Run commands on stream events
+    runOnInit: ""
+    runOnInitRestart: no
+    runOnDemand: ""
+    runOnDemandRestart: no
+    runOnDemandStartTimeout: 10s
+    runOnDemandCloseAfter: 10s
+    runOnUnDemand: ""
+    
+    # Hooks for stream lifecycle events
+    runOnReady: "curl -X POST http://localhost:8000/api/livestream/rtmp-status -H 'Content-Type: application/json' -d '{\"streamKey\": \"$MTX_PATH\", \"status\": \"live\", \"timestamp\": \"$MTX_TIME\"}'"
+    runOnNotReady: "curl -X POST http://localhost:8000/api/livestream/rtmp-status -H 'Content-Type: application/json' -d '{\"streamKey\": \"$MTX_PATH\", \"status\": \"ended\", \"timestamp\": \"$MTX_TIME\"}'"
+    
+    # Recording settings for this path
+    record: no
+    
+    # HLS settings
+    readTimeout: 10s
+    writeTimeout: 10s
+
+# Authentication settings (optional)
+authMethod: internal
+
+# External authentication can be configured here
+# This would validate RTMP keys against your FastAPI backend
+# authHTTPAddress: "http://localhost:8000/api/livestream/validate-key"
+
+# Performance tuning
+readBufferCount: 512
+readBufferSize: 2048
+writeQueueSize: 512
+
+# RTMP-specific settings
+rtmpReadTimeout: 10s
+rtmpWriteTimeout: 10s
+
+# HLS-specific settings  
+hlsReadTimeout: 10s
+hlsWriteTimeout: 10s
+
+# Paths for specific streams can be configured here
+# Each RTMP key becomes a path that can be accessed via HLS

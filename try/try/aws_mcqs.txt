@@ -1,0 +1,34 @@
+1. What does AWS stand for in the context of cloud computing?
+    A. Amazon Web Service
+    B. Amazon Web System
+    C. Amazon Wide Service
+    D. Amazon Wide System
+   Correct answer: A. Amazon Web Service 
+
+2. Which AWS service allows you to run code without provisioning or managing servers?
+    A. AWS S3
+    B. AWS EC2
+    C. AWS Lambda
+    D. AWS RDS
+   Correct answer: C. AWS Lambda   
+
+3. Which AWS service is a fully managed NoSQL database service?
+    A. Amazon S3
+    B. Amazon EC2
+    C. Amazon RDS
+    D. Amazon DynamoDB
+   Correct answer: D. Amazon DynamoDB 
+
+4. Which is a benefit of using AWS for cloud computing?
+    A. Unlimited storage capacity
+    B. No upfront investment
+    C. Pay-as-you-go pricing
+    D. All of the above
+   Correct answer: D. All of the above 
+
+5. What service would you use to automate deployments in AWS?
+    A. AWS CodeDeploy
+    B. AWS CodeCommit
+    C. AWS CodeBuild
+    D. AWS CodeStar  
+   Correct answer: A. AWS CodeDeploy

@@ -11,6 +11,9 @@ from config import settings
 from sqlalchemy import func
 from schemas import EnrolledCourseResponse, UserResponse
 from services.notification_service import NotificationService
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
@@ -44,7 +47,6 @@ def generate_presigned_url(bucket_name: str, object_key: str, expiration: int = 
 
 @router.get("/", response_model=List[CourseResponse])
 async def get_courses(
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get all courses"""
@@ -75,7 +77,9 @@ async def get_my_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get courses created by the current user (teachers only)"""
+    """Get courses created by the current user (teachers only) - Dependency-free implementation"""
+
+    # Simple role validation
     if current_user.role != "teacher":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -83,26 +87,82 @@ async def get_my_courses(
         )
 
     try:
-        courses = db.query(Course).filter(
-            Course.instructor_id == current_user.id).all()
+        # Direct ORM query with explicit column selection - no relationships
+        courses = db.query(
+            Course.id,
+            Course.title,
+            Course.description,
+            Course.instructor_id,
+            Course.is_enrollment_open,
+            Course.credits,
+            Course.created_at,
+            Course.updated_at
+        ).filter(Course.instructor_id == current_user.id).all()
+
+        # Construct response manually to avoid any dependency issues
         return [
             CourseResponse(
                 id=course.id,
-                title=course.title,
-                description=course.description,
+                title=course.title or "Untitled Course",
+                description=course.description or "",
                 instructor_id=course.instructor_id,
-                is_enrollment_open=course.is_enrollment_open,
-                credits=course.credits,
+                is_enrollment_open=bool(
+                    course.is_enrollment_open if course.is_enrollment_open is not None else True),
+                credits=int(
+                    course.credits if course.credits is not None else 3),
                 created_at=course.created_at,
                 updated_at=course.updated_at
             )
             for course in courses
         ]
+
     except Exception as e:
+        # Simple fallback without complex error handling
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch your courses: {str(e)}"
+            detail="Failed to fetch courses"
         )
+
+
+@router.get("/my-courses-simple")
+async def get_my_courses_simple(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Ultra-simple get courses endpoint with no dependencies - fallback option"""
+
+    # Basic role check
+    if not current_user or not hasattr(current_user, 'role') or current_user.role != "teacher":
+        return {"error": "Access denied: Only teachers can access courses", "courses": []}
+
+    try:
+        # Direct SQL query with minimal processing
+        from sqlalchemy import text
+        query = text(
+            "SELECT id, title, description FROM courses WHERE instructor_id = :instructor_id")
+        result = db.execute(query, {"instructor_id": current_user.id})
+        courses = []
+
+        for row in result:
+            courses.append({
+                "id": row.id,
+                "title": row.title or f"Course {row.id}",
+                "description": row.description or "No description"
+            })
+
+        return {
+            "success": True,
+            "courses": courses,
+            "total": len(courses),
+            "teacher_id": current_user.id
+        }
+
+    except Exception as e:
+        return {
+            "error": f"Database error: {str(e)}",
+            "courses": [],
+            "success": False
+        }
 
 
 @router.get("/enrolled-courses", response_model=List[EnrolledCourseResponse])
@@ -351,6 +411,16 @@ async def apply_for_course(
         db.add(application)
         db.commit()
         db.refresh(application)
+
+        # Send notification to the course instructor
+        try:
+            NotificationService.create_new_application_notification_for_teacher(
+                db=db,
+                application_id=application.id
+            )
+        except Exception as e:
+            # Don't fail the application if notification fails
+            logger.warning(f"Failed to create teacher notification for application {application.id}: {e}")
 
         return ApplicationResponse.model_validate(application)
 

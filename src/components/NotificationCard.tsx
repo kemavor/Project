@@ -159,9 +159,9 @@ export const NotificationList: React.FC<NotificationListProps> = ({
 }) => {
   if (notifications.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p className="text-sm">No notifications</p>
+      <div className="text-center py-8 text-black">
+        <Bell className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+        <p className="text-sm font-medium">No notifications</p>
       </div>
     );
   }

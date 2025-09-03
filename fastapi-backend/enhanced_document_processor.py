@@ -16,21 +16,21 @@ try:
     PDF_AVAILABLE = True
 except ImportError:
     PDF_AVAILABLE = False
-    print("⚠️  PyPDF2 not available. PDF processing will be limited.")
+    print("WARNING: PyPDF2 not available. PDF processing will be limited.")
 
 try:
     from docx import Document
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
-    print("⚠️  python-docx not available. Word document processing will be limited.")
+    print("WARNING: python-docx not available. Word document processing will be limited.")
 
 try:
     import pandas as pd
     EXCEL_AVAILABLE = True
 except ImportError:
     EXCEL_AVAILABLE = False
-    print("⚠️  pandas not available. Excel processing will be limited.")
+    print("WARNING: pandas not available. Excel processing will be limited.")
 
 
 class EnhancedDocumentProcessor:

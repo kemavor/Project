@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Layout } from '../components/Layout';
 import { useCourses, Course } from '../hooks/useCourses';
 import { EnhancedCourseCard } from '../components/EnhancedCourseCard';
 import { CourseCardSkeleton } from '../components/EnhancedSkeleton';
@@ -11,10 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, Filter, BookOpen, GraduationCap, Shield, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { Layout } from '../components/Layout';
 import { apiClient } from '../lib/api';
 import { toast } from 'react-hot-toast';
 import { CourseSearch, SearchUtils } from '../lib/searchUtils';
+import { LoaderOne } from '@/components/ui/loader';
 
 const CourseSelection: React.FC = () => {
   const { user } = useAuth();
@@ -176,7 +177,7 @@ const CourseSelection: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="p-6 space-y-6">
+        <div className="min-h-screen bg-gray-50 p-6 space-y-6">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
@@ -192,10 +193,11 @@ const CourseSelection: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <CourseCardSkeleton key={i} />
-            ))}
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <LoaderOne size="lg" className="mx-auto mb-4" />
+              <p className="text-gray-600 font-medium">Loading courses...</p>
+            </div>
           </div>
         </div>
       </Layout>
@@ -205,19 +207,19 @@ const CourseSelection: React.FC = () => {
   if (error) {
     return (
       <Layout>
-        <div className="p-6 space-y-6">
+        <div className="min-h-screen bg-gray-50 p-6 space-y-6">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-red-700 mb-4 font-medium">{error}</p>
           <Button onClick={fetchCoursesByYear}>Try Again</Button>
         </div>
-      </div>
+        </div>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="p-6 space-y-6">
+      <div className="min-h-screen bg-gray-50 p-6 space-y-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -225,8 +227,8 @@ const CourseSelection: React.FC = () => {
               <BookOpen className="h-8 w-8 text-white" />
                 </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">Course Selection</h1>
-              <p className="text-muted-foreground text-lg">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Course Selection</h1>
+              <p className="text-gray-700 text-lg font-medium">
                 Browse and apply for available courses
               </p>
             </div>
@@ -236,24 +238,24 @@ const CourseSelection: React.FC = () => {
         {/* Search and Filters */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-black font-bold text-xl">
+              <Search className="h-5 w-5 text-blue-600" />
               Search & Filter
             </CardTitle>
-            <CardDescription>Find courses that match your interests and requirements</CardDescription>
+            <CardDescription className="text-black font-medium">Find courses that match your interests and requirements</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
               {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative">
               <div className="flex gap-4">
                   <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600" />
                     <Input
                       type="text"
                     placeholder="Search courses by name, description, or instructor..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 text-black placeholder:text-gray-600"
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     />
@@ -262,14 +264,17 @@ const CourseSelection: React.FC = () => {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-600 hover:text-gray-800"
                       onClick={clearSearch}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
-                <Button type="submit">
+                <Button 
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                >
                     Search
                   </Button>
               </div>
@@ -294,8 +299,8 @@ const CourseSelection: React.FC = () => {
 
               {/* Year Filters */}
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Filter className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-sm font-semibold text-black">
+                <Filter className="h-4 w-4 text-blue-600" />
                 Filter by Year:
                 </div>
               <div className="flex gap-2">
@@ -303,6 +308,10 @@ const CourseSelection: React.FC = () => {
                     variant={selectedYear === null ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleYearFilter(null)}
+                    className={selectedYear === null 
+                      ? "bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                      : "bg-gray-800 hover:bg-gray-700 text-white border-gray-800 hover:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                    }
                   >
                     All Years
                   </Button>
@@ -312,6 +321,10 @@ const CourseSelection: React.FC = () => {
                       variant={selectedYear === year ? "default" : "outline"}
                       size="sm"
                       onClick={() => handleYearFilter(year)}
+                      className={selectedYear === year 
+                        ? "bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                        : "bg-gray-800 hover:bg-gray-700 text-white border-gray-800 hover:border-gray-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                      }
                     >
                       Year {year}
                     </Button>
@@ -322,9 +335,9 @@ const CourseSelection: React.FC = () => {
             {/* Active Filters Display */}
             {(searchTerm || selectedYear !== null) && (
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
+                <span className="text-sm text-black font-medium">Active filters:</span>
                 {searchTerm && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-800 border-blue-300">
                     Search: "{searchTerm}"
                     <button
                       onClick={() => setSearchTerm('')}
@@ -335,7 +348,7 @@ const CourseSelection: React.FC = () => {
                   </Badge>
                 )}
                 {selectedYear !== null && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1 bg-green-100 text-green-800 border-green-300">
                     Year: {selectedYear}
                     <button
                       onClick={() => setSelectedYear(null)}
@@ -349,7 +362,7 @@ const CourseSelection: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={clearSearch}
-                  className="text-xs"
+                  className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 font-medium"
                 >
                   Clear All
                 </Button>
@@ -361,10 +374,10 @@ const CourseSelection: React.FC = () => {
           {/* Course Display Section */}
           {searchTerm ? (
             // Search Results
-          <Card>
+          <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Search Results for "{searchTerm}"</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-black font-semibold text-xl">Search Results for "{searchTerm}"</CardTitle>
+              <CardDescription className="text-black font-medium">
                 Found {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} matching your search
               </CardDescription>
             </CardHeader>
@@ -382,12 +395,15 @@ const CourseSelection: React.FC = () => {
                   </div>
                 ) : (
                 <div className="text-center py-12">
-                  <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No courses found</h3>
-                  <p className="text-muted-foreground mb-4">
+                  <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-black mb-2">No courses found</h3>
+                  <p className="text-black mb-4 font-medium">
                     Try adjusting your search terms or browse all courses below.
                   </p>
-                  <Button onClick={clearSearch} variant="outline">
+                  <Button 
+                    onClick={clearSearch} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700 shadow-md hover:shadow-lg transition-all duration-200 font-medium"
+                  >
                     Clear Search
                   </Button>
                 </div>
@@ -396,17 +412,17 @@ const CourseSelection: React.FC = () => {
                   </Card>
           ) : (
             // Courses by Year
-          <Card>
+          <Card className="bg-white border border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Available Courses</CardTitle>
-              <CardDescription>Browse courses by academic year</CardDescription>
+              <CardTitle className="text-black font-semibold text-xl">Available Courses</CardTitle>
+              <CardDescription className="text-black font-medium">Browse courses by academic year</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="all" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="all">All Years</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-lg">
+                  <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm text-gray-700 font-medium">All Years</TabsTrigger>
                   {years.map((year) => (
-                    <TabsTrigger key={year} value={`year-${year}`}>
+                    <TabsTrigger key={year} value={`year-${year}`} className="data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm text-gray-700 font-medium">
                       Year {year}
                       </TabsTrigger>
                     ))}
@@ -414,8 +430,8 @@ const CourseSelection: React.FC = () => {
 
                 <TabsContent value="all" className="mt-6">
                     <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-2">All Available Courses</h3>
-                    <p className="text-muted-foreground">Browse all courses across different academic years</p>
+                    <h3 className="text-xl font-bold text-black mb-2">All Available Courses</h3>
+                    <p className="text-black font-medium">Browse all courses across different academic years</p>
                     </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {Object.entries(filteredCoursesByYear).map(([year, yearCourses]) =>
@@ -431,9 +447,9 @@ const CourseSelection: React.FC = () => {
                     </div>
                   {Object.keys(filteredCoursesByYear).length === 0 && (
                     <div className="text-center py-12">
-                      <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No courses available</h3>
-                      <p className="text-muted-foreground">Courses will appear here once they are added to the system.</p>
+                      <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold text-black mb-2">No courses available</h3>
+                      <p className="text-black font-medium">Courses will appear here once they are added to the system.</p>
                     </div>
                     )}
                   </TabsContent>
@@ -441,8 +457,8 @@ const CourseSelection: React.FC = () => {
                   {years.map((year) => (
                   <TabsContent key={year} value={`year-${year}`} className="mt-6">
                       <div className="mb-4">
-                      <h3 className="text-lg font-semibold mb-2">Year {year} Courses</h3>
-                      <p className="text-muted-foreground">Courses available for Year {year} students</p>
+                      <h3 className="text-xl font-bold text-black mb-2">Year {year} Courses</h3>
+                      <p className="text-black font-medium">Courses available for Year {year} students</p>
                       </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                       {(filteredCoursesByYear[year] as Course[] || []).map((course: Course) => (
@@ -456,9 +472,9 @@ const CourseSelection: React.FC = () => {
                       </div>
                     {(!filteredCoursesByYear[year] || (filteredCoursesByYear[year] as Course[]).length === 0) && (
                       <div className="text-center py-12">
-                        <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No Year {year} courses available</h3>
-                        <p className="text-muted-foreground">Check back later for new courses.</p>
+                        <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-black mb-2">No Year {year} courses available</h3>
+                        <p className="text-black font-medium">Check back later for new courses.</p>
                       </div>
                       )}
                     </TabsContent>

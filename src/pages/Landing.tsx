@@ -4,6 +4,10 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import VideoBackground from '../components/VideoBackground';
+import { HoverEffect } from '../components/ui/card-hover-effect';
+import { GlowingEffect } from '../components/ui/glowing-effect';
+import { TextRevealCard, TextRevealCardTitle, TextRevealCardDescription } from '../components/ui/text-reveal-card';
+import { cn } from '../lib/utils';
 import { 
   BookOpen, 
   Users, 
@@ -20,7 +24,13 @@ import {
   Sparkles,
   Zap,
   Target,
-  Star
+  Star,
+  MessageSquare,
+  TrendingUp,
+  Calendar,
+  FileText,
+  Mic,
+  Monitor
 } from 'lucide-react';
 
 const Landing = () => {
@@ -40,40 +50,40 @@ const Landing = () => {
 
   const features = [
     {
-      icon: <Video className="h-6 w-6" />,
-      title: "Live Lectures",
-      description: "Attend real-time lectures with interactive features and real-time collaboration.",
-      gradient: "from-blue-500 to-purple-600"
+      icon: <Mic className="h-6 w-6" />,
+      title: "Live Classes",
+      description: "Join live classes from anywhere. Ask questions, participate in discussions, and learn in real-time with your classmates.",
+      color: "text-blue-600"
     },
     {
-      icon: <Brain className="h-6 w-6" />,
-      title: "Smart Learning",
-      description: "Advanced tools for personalized learning experiences and content generation.",
-      gradient: "from-purple-500 to-pink-600"
+      icon: <MessageSquare className="h-6 w-6" />,
+      title: "Group Discussions",
+      description: "Chat with classmates, share notes, and work on projects together. Learning is better when you're not alone.",
+      color: "text-purple-600"
     },
     {
-      icon: <Users className="h-6 w-6" />,
-      title: "Collaborative Learning",
-      description: "Work together with peers and teachers in real-time collaborative sessions.",
-      gradient: "from-green-500 to-blue-600"
+      icon: <TrendingUp className="h-6 w-6" />,
+      title: "Track Your Progress",
+      description: "See how you're doing with easy-to-understand charts and reports. Know exactly where you need to improve.",
+      color: "text-green-600"
     },
     {
-      icon: <BarChart3 className="h-6 w-6" />,
-      title: "Analytics & Insights",
-      description: "Track your learning progress with detailed analytics and performance insights.",
-      gradient: "from-orange-500 to-red-600"
+      icon: <Calendar className="h-6 w-6" />,
+      title: "Never Miss a Class",
+      description: "Get reminders for upcoming classes and automatically track your attendance. Stay on top of your learning schedule.",
+      color: "text-orange-600"
     },
     {
-      icon: <Clock className="h-6 w-6" />,
-      title: "Attendance Tracking",
-      description: "Automated attendance tracking and engagement monitoring for better accountability.",
-      gradient: "from-indigo-500 to-purple-600"
+      icon: <FileText className="h-6 w-6" />,
+      title: "Study Materials",
+      description: "Access all your course materials, notes, and assignments in one place. Everything you need, organized and ready.",
+      color: "text-indigo-600"
     },
     {
-      icon: <CheckCircle className="h-6 w-6" />,
-      title: "Assessment Tools",
-      description: "Comprehensive assessment tools including quizzes, polls, and interactive exercises.",
-      gradient: "from-teal-500 to-green-600"
+      icon: <Monitor className="h-6 w-6" />,
+      title: "Practice Tests",
+      description: "Test your knowledge with quizzes and practice exams. Get instant feedback to help you learn faster.",
+      color: "text-green-600"
     }
   ];
 
@@ -81,31 +91,28 @@ const Landing = () => {
     {
       icon: <GraduationCap className="h-8 w-8" />,
       title: "Students",
-      description: "Access courses, attend lectures, participate in discussions, and track your progress.",
-      features: ["Live lecture participation", "Course materials", "Progress tracking", "Collaborative learning"],
-      gradient: "from-blue-500 to-indigo-600",
-      color: "bg-gradient-to-br from-blue-900/20 to-indigo-900/20 border-blue-400/30"
+      description: "Join classes, study with friends, and track your learning journey. Everything you need to succeed is right here.",
+      features: ["Join live classes", "Study with classmates", "Track your progress", "Access course materials"],
+      color: "bg-blue-900/20 border-blue-400/30"
     },
     {
       icon: <Presentation className="h-8 w-8" />,
       title: "Teachers",
-      description: "Create and manage courses, conduct live lectures, and monitor student engagement.",
-      features: ["Course creation", "Live streaming", "Student analytics", "Assessment tools"],
-      gradient: "from-green-500 to-emerald-600",
-      color: "bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-400/30"
+      description: "Create engaging courses, teach live classes, and help your students succeed. Make teaching easier and more effective.",
+      features: ["Create courses", "Teach live classes", "Track student progress", "Create assignments"],
+      color: "bg-green-900/20 border-green-400/30"
     },
     {
       icon: <Settings className="h-8 w-8" />,
-      title: "Administrators",
-      description: "Manage the platform, oversee user accounts, and monitor system performance.",
-      features: ["User management", "System monitoring", "Platform analytics", "Security controls"],
-      gradient: "from-purple-500 to-violet-600",
-      color: "bg-gradient-to-br from-purple-900/20 to-violet-900/20 border-purple-400/30"
+      title: "School Admins",
+      description: "Manage your school's learning platform, help teachers and students, and keep everything running smoothly.",
+      features: ["Manage users", "Monitor classes", "View reports", "Support teachers"],
+      color: "bg-blue-900/20 border-blue-400/30"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-blue-950">
+    <div className="min-h-screen bg-black">
       {/* Fixed Glassy Header */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
@@ -117,14 +124,11 @@ const Landing = () => {
           <div className="flex items-center space-x-3">
             <div className="relative">
                 <img src="/visionware-logo.png" alt="VisionWare Logo" className="w-12 h-12 rounded-2xl shadow-lg" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <Sparkles className="h-2 w-2 text-white" />
-              </div>
             </div>
             <div>
                 <span className={`text-2xl font-bold transition-colors duration-300 ${
                   isScrolled 
-                    ? 'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent' 
+                    ? 'text-blue-600' 
                     : 'text-white drop-shadow-lg'
                 }`}>
                 VisionWare
@@ -144,13 +148,13 @@ const Landing = () => {
                 onClick={() => navigate('/login')} 
                 className={`font-medium transition-all duration-300 ${
                   isScrolled
-                    ? 'text-blue-200 hover:text-white hover:bg-blue-900/30'
-                    : 'text-white hover:text-blue-300 hover:bg-white/10 border border-blue-400/30 bg-black/20 backdrop-blur-sm'
+                    ? 'text-gray-200 hover:text-white hover:bg-black/30'
+: 'text-white hover:text-gray-300 hover:bg-white/10 border border-gray-400/30 bg-black/20 backdrop-blur-sm'
                 }`}
               >
               Sign In
             </Button>
-            <Button onClick={() => navigate('/register')} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-xl text-white font-semibold border border-blue-400/30">
+            <Button onClick={() => navigate('/register')} className="bg-gray-700 hover:bg-gray-800 shadow-xl text-white font-semibold border border-gray-400/30">
               Register
             </Button>
             </div>
@@ -162,13 +166,8 @@ const Landing = () => {
       <VideoBackground>
         <section className="container mx-auto px-4 py-20 pt-32">
         <div className="text-center max-w-6xl mx-auto">
-            <Badge className="mb-6 px-6 py-3 text-sm font-semibold bg-black/30 backdrop-blur-xl text-white border border-blue-400/40 shadow-2xl">
-            <Shield className="h-4 w-4 mr-2" />
-            Secure Learning Platform
-          </Badge>
-          
             <h1 className="text-6xl md:text-7xl font-bold mb-8 leading-tight text-white drop-shadow-2xl">
-              <span className="bg-gradient-to-r from-blue-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-lg">
+              <span className="text-blue-300 drop-shadow-lg">
             Next-Generation
             </span>
             <br />
@@ -184,14 +183,14 @@ const Landing = () => {
                      <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
              <button 
                onClick={() => navigate('/register')} 
-                className="bg-black/40 backdrop-blur-xl text-white border border-blue-400/40 hover:bg-blue-900/30 text-lg px-8 py-4 font-semibold rounded-lg shadow-2xl transition-all duration-300 flex items-center justify-center whitespace-nowrap"
+                className="bg-black/40 backdrop-blur-xl text-white border border-gray-400/40 hover:bg-black/30 text-lg px-8 py-4 font-semibold rounded-lg shadow-2xl transition-all duration-300 flex items-center justify-center whitespace-nowrap"
              >
                Register Today
                 <ArrowRight className="ml-2 h-5 w-5 flex-shrink-0" />
              </button>
              <button 
                onClick={() => navigate('/login')} 
-                className="bg-transparent text-white border-2 border-blue-400/50 hover:bg-blue-900/20 text-lg px-8 py-4 font-semibold rounded-lg shadow-2xl transition-all duration-300 backdrop-blur-sm"
+                className="bg-transparent text-white border-2 border-gray-400/50 hover:bg-black/20 text-lg px-8 py-4 font-semibold rounded-lg shadow-2xl transition-all duration-300 backdrop-blur-sm"
              >
                Sign In
             </button>
@@ -217,154 +216,132 @@ const Landing = () => {
       </VideoBackground>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="w-full bg-white py-20">
+        <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Powerful Features for
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> Modern Education</span>
+          <h2 className="text-4xl md:text-5xl font-bold text-black mb-6">
+            Everything You Need to
+            <span className="text-blue-600"> Learn Better</span>
           </h2>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Our platform combines cutting-edge technology with proven educational 
-            methodologies to deliver an exceptional learning experience.
+          <p className="text-xl text-gray-700 max-w-3xl mx-auto">
+            We've built the tools that make learning easier, more engaging, and more effective. 
+            Whether you're a student or teacher, you'll find everything you need here.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div key={index} className="group relative">
-              {/* Organic background shape */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-2xl transform rotate-1 scale-105 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-              
-              <Card className="relative group hover:shadow-2xl transition-all duration-500 border border-blue-400/20 bg-black/30 backdrop-blur-xl shadow-xl hover:bg-black/40 hover:scale-105 hover:-rotate-1">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start space-x-4">
-                    <div className={`relative w-12 h-12 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                      <div className="text-white">
-                        {feature.icon}
-                      </div>
-                      {/* Subtle glow effect */}
-                      <div className="absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-xl opacity-20 blur-sm group-hover:opacity-40 transition-opacity duration-300"></div>
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg font-bold text-white group-hover:text-blue-200 transition-colors duration-300">
-                        {feature.title}
-                      </CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-blue-100 leading-relaxed text-sm">
-                    {feature.description}
-                  </CardDescription>
-                  
-                  {/* Interactive element */}
-                  <div className="mt-4 flex items-center text-blue-300 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span>Learn more</span>
-                    <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform duration-300" />
-                  </div>
-                </CardContent>
-                
-                {/* Decorative accent */}
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-8 translate-x-8 group-hover:scale-150 transition-transform duration-500"></div>
-              </Card>
-            </div>
-          ))}
+        <HoverEffect 
+          items={features.map(feature => ({
+            title: feature.title,
+            description: feature.description,
+            icon: feature.icon,
+            color: feature.color
+          }))}
+          className="max-w-5xl mx-auto px-4"
+        />
         </div>
       </section>
 
       {/* Roles Section */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-20 max-w-7xl">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Designed for
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> Every Role</span>
+            Built for
+            <span className="text-blue-600"> Everyone</span>
           </h2>
           <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Our platform serves the entire educational ecosystem with role-specific 
-            features and capabilities.
+            Whether you're learning, teaching, or managing a school, we've got you covered. 
+            Each role has the tools they need to succeed.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {roles.map((role, index) => (
-            <div key={index} className="group relative">
-              {/* Organic background shape */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-3xl transform -rotate-1 scale-105 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-              
-              <Card className={`relative group hover:shadow-2xl transition-all duration-500 border border-blue-400/20 bg-black/30 backdrop-blur-xl shadow-xl hover:bg-black/40 hover:scale-105 hover:rotate-1 ${role.color}`}>
-                <CardHeader className="text-center pb-6">
-                  <div className="relative">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${role.gradient} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl group-hover:scale-110 transition-transform duration-300`}>
-                      <div className="text-white">
-                        {role.icon}
-                      </div>
-                      {/* Subtle glow effect */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${role.gradient} rounded-2xl opacity-20 blur-sm group-hover:opacity-40 transition-opacity duration-300`}></div>
-                    </div>
-                    
-                    {/* Decorative elements */}
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
-                    <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full group-hover:scale-150 transition-transform duration-500 delay-100"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="h-[24rem]">
+            <TextRevealCard
+              text="Students"
+              revealText="Join classes, study with friends, and track your learning journey. Everything you need to succeed is right here."
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <div className="mt-6 space-y-2">
+                {["Join live classes", "Study with classmates", "Track your progress", "Access course materials"].map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <span className="text-sm text-gray-300">{feature}</span>
                   </div>
-                  
-                  <CardTitle className="text-xl font-bold text-white group-hover:text-blue-200 transition-colors duration-300">
-                    {role.title}
-                  </CardTitle>
-                  <CardDescription className="text-blue-100 leading-relaxed text-sm mt-2">
-                    {role.description}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent>
-                  <ul className="space-y-3">
-                    {role.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center text-blue-100 group-hover:text-white transition-colors duration-300">
-                        <div className="relative mr-3">
-                          <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
-                          <div className="absolute inset-0 bg-green-400/20 rounded-full blur-sm group-hover:scale-150 transition-transform duration-300"></div>
-                        </div>
-                        <span className="text-sm font-medium">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  {/* Interactive element */}
-                  <div className="mt-6 pt-4 border-t border-blue-400/20">
-                    <div className="flex items-center justify-center text-blue-300 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span>Explore {role.title.toLowerCase()}</span>
-                      <ArrowRight className="ml-1 h-3 w-3 group-hover:translate-x-1 transition-transform duration-300" />
-                    </div>
+                ))}
+              </div>
+            </TextRevealCard>
+          </div>
+
+          <div className="h-[24rem]">
+            <TextRevealCard
+              text="Teachers"
+              revealText="Create engaging courses, teach live classes, and help your students succeed. Make teaching easier and more effective."
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Presentation className="h-6 w-6 text-white" />
+              </div>
+              <div className="mt-6 space-y-2">
+                {["Create courses", "Teach live classes", "Track student progress", "Create assignments"].map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <span className="text-sm text-gray-300">{feature}</span>
                   </div>
-                </CardContent>
-                
-                {/* Decorative accent */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-500"></div>
-              </Card>
-            </div>
-          ))}
+                ))}
+              </div>
+            </TextRevealCard>
+          </div>
+
+          <div className="h-[24rem]">
+            <TextRevealCard
+              text="School Admins"
+              revealText="Manage your school's learning platform, help teachers and students, and keep everything running smoothly."
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Settings className="h-6 w-6 text-white" />
+              </div>
+              <div className="mt-6 space-y-2">
+                {["Manage users", "Monitor classes", "View reports", "Support teachers"].map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <span className="text-sm text-gray-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </TextRevealCard>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 backdrop-blur-xl rounded-3xl p-12 text-center text-white border border-blue-400/30 shadow-2xl">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+      <section className="relative flex h-[50rem] w-full items-center justify-center bg-black">
+        <div
+          className={cn(
+            "absolute inset-0",
+            "[background-size:40px_40px]",
+            "[background-image:linear-gradient(to_right,#262626_1px,transparent_1px),linear-gradient(to_bottom,#262626_1px,transparent_1px)]",
+          )}
+        />
+        {/* Radial gradient for the container to give a faded look */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]"></div>
+        
+        <div className="relative z-20 max-w-4xl mx-auto text-center px-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
             Ready to Transform Your Learning Experience?
           </h2>
-            <p className="text-xl mb-8 text-blue-100">
+          <p className="text-xl mb-8 text-blue-100">
             Join our secure learning platform and experience the future of education. 
             Register today to get started or sign in to your existing account.
           </p>
-                         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-               <Button size="lg" onClick={() => navigate('/login')} variant="secondary" className="bg-white/20 backdrop-blur-xl text-white hover:bg-white/30 text-lg px-8 py-4 shadow-2xl font-semibold border border-white/30">
-            Sign In to Your Account
-                 <ArrowRight className="ml-2 h-5 w-5" />
-               </Button>
-               <Button size="lg" variant="secondary" onClick={() => navigate('/register')} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg px-8 py-4 shadow-2xl font-semibold border border-blue-400/30">
-                 Register Today
-          </Button>
-             </div>
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <Button size="lg" onClick={() => navigate('/login')} variant="secondary" className="bg-white/20 backdrop-blur-xl text-white hover:bg-white/30 text-lg px-8 py-4 shadow-2xl font-semibold border border-white/30">
+              Sign In to Your Account
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button size="lg" variant="secondary" onClick={() => navigate('/register')} className="bg-gray-700 hover:bg-gray-800 text-white text-lg px-8 py-4 shadow-2xl font-semibold border border-gray-400/30">
+              Register Today
+            </Button>
           </div>
         </div>
       </section>
@@ -375,11 +352,8 @@ const Landing = () => {
           <div className="flex items-center justify-center space-x-3 mb-8">
             <div className="relative">
               <img src="/visionware-logo.png" alt="VisionWare Logo" className="w-8 h-8 rounded-lg" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <Sparkles className="h-1.5 w-1.5 text-white" />
-              </div>
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold text-blue-600">
               VisionWare
             </span>
           </div>
@@ -398,5 +372,7 @@ const Landing = () => {
     </div>
   );
 };
+
+
 
 export default Landing;

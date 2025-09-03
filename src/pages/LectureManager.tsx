@@ -12,7 +12,6 @@ import { Badge } from '../components/ui/badge';
 import { Calendar, Clock, User, Eye, Plus, AlertCircle, BookOpen, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCourses } from '../hooks/useCourses';
-import { Layout } from '../components/Layout';
 
 const LectureManager: React.FC = () => {
   const navigate = useNavigate();
@@ -133,7 +132,6 @@ const LectureManager: React.FC = () => {
   if (errorCourses) return <div>Error loading courses</div>;
 
   return (
-    <Layout>
       <div className="container mx-auto p-6 space-y-8">
         <div className="flex items-center justify-between">
           <div>
@@ -287,7 +285,6 @@ const LectureManager: React.FC = () => {
           />
         )}
       </div>
-    </Layout>
   );
 };
 

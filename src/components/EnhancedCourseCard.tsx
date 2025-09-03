@@ -19,7 +19,8 @@ import {
   Star,
   TrendingUp,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Send
 } from "lucide-react";
 
 interface EnhancedCourseCardProps {
@@ -35,6 +36,8 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
+  const [localApplicationStatus, setLocalApplicationStatus] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   // Provide default values for missing properties
   const courseData = {
@@ -55,6 +58,28 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
 
   const enrollmentPercentage = (courseData.enrolled_students_count / courseData.max_students) * 100;
 
+  // Handle application with instant feedback
+  const handleApply = async () => {
+    setIsApplying(true);
+    setLocalApplicationStatus('applying');
+    
+    try {
+      await onApply(course);
+      // Show success feedback immediately
+      setLocalApplicationStatus('applied');
+      
+      // Auto-revert to pending after a delay to show realistic status
+      setTimeout(() => {
+        setLocalApplicationStatus('pending');
+      }, 2000);
+    } catch (error) {
+      // Revert to original state on error
+      setLocalApplicationStatus(null);
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "enrolled":
@@ -73,11 +98,11 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
   const renderFile = (file: CourseFile) => {
     if (file.file_type === 'video') {
       return (
-        <div className="group relative bg-gray-50 dark:bg-gray-800 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <div className="flex items-center justify-between mb-2">
+        <div className="group relative bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Play className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
+              <Play className="w-4 h-4 text-blue-700" />
+              <span className="font-semibold text-sm text-gray-800">
                 {file.filename}
               </span>
             </div>
@@ -95,11 +120,11 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
     }
     
     return (
-      <div className="group bg-gray-50 dark:bg-gray-800 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <div className="group bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-600" />
-            <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
+            <FileText className="w-4 h-4 text-blue-700" />
+            <span className="font-semibold text-sm text-gray-800">
               {file.filename}
             </span>
           </div>
@@ -117,39 +142,39 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
   };
 
   return (
-    <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 overflow-hidden">
-      {/* Header with gradient background */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
+    <Card className="hover:shadow-lg transition-all duration-200 border border-gray-200 bg-white shadow-sm hover:-translate-y-1 overflow-hidden">
+      {/* Header with enhanced background */}
+      <div className="relative p-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-purple-50 opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
         <CardHeader className="relative pb-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="w-5 h-5 text-blue-600" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors leading-tight">
                   {courseData.name}
                 </h3>
               </div>
               
-              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                <div className="flex items-center gap-1">
-                  <Award className="w-4 h-4 text-amber-500" />
+              <div className="flex items-center gap-4 text-sm text-gray-700 font-medium mb-4">
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-600" />
                   <span>Year {courseData.year}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500" />
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow-600" />
                   <span>{courseData.credits} Credits</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-green-600" />
                   <span>{courseData.available_spots} spots left</span>
                 </div>
               </div>
 
               {/* Enrollment Progress */}
               <div className="space-y-2">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>Enrollment</span>
+                <div className="flex justify-between text-sm text-gray-600 font-medium">
+                  <span>Enrollment Progress</span>
                   <span>{courseData.enrolled_students_count}/{courseData.max_students}</span>
                 </div>
                 <Progress 
@@ -171,9 +196,9 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
         </CardHeader>
       </div>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-6">
         {/* Description */}
-        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+        <p className="text-gray-700 leading-relaxed font-medium text-base">
           {courseData.description}
         </p>
 
@@ -183,11 +208,11 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
             <Button
               variant="ghost"
               onClick={() => setShowFiles(!showFiles)}
-              className="w-full justify-between p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              className="w-full justify-between p-0 h-auto text-blue-700 hover:text-blue-900 font-medium"
             >
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                <span>Course Files ({courseData.files.length})</span>
+                <span className="font-semibold">Course Files ({courseData.files.length})</span>
               </div>
               {showFiles ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </Button>
@@ -210,18 +235,18 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
             <Button
               variant="ghost"
               onClick={() => setShowDetails(!showDetails)}
-              className="w-full justify-between p-0 h-auto text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              className="w-full justify-between p-0 h-auto text-gray-700 hover:text-gray-900 font-medium"
             >
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
-                <span>Prerequisites</span>
+                <span className="font-semibold">Prerequisites</span>
               </div>
               {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </Button>
             
             {showDetails && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 animate-in slide-in-from-top-2 duration-200">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 animate-in slide-in-from-top-2 duration-200">
+                <p className="text-sm text-gray-800 font-medium leading-relaxed">
                   {courseData.prerequisites}
                 </p>
               </div>
@@ -230,35 +255,43 @@ export const EnhancedCourseCard: React.FC<EnhancedCourseCardProps> = ({
         )}
 
         {/* Action Section */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          {courseData.current_user_application ? (
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              Application submitted
+        <div className="pt-4 border-t border-gray-200">
+          {/* Check for existing application or local status */}
+          {courseData.current_user_application || localApplicationStatus === 'pending' ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-700 font-medium p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <CheckCircle className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-800 font-semibold">
+                Application {localApplicationStatus === 'pending' ? 'Pending Review' : 'Submitted'}
+              </span>
+            </div>
+          ) : localApplicationStatus === 'applied' ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-white font-medium p-3 bg-green-500 rounded-lg animate-pulse">
+              <CheckCircle className="w-4 h-4 text-white" />
+              <span className="font-semibold">Application Submitted Successfully!</span>
             </div>
           ) : courseData.can_enroll.can_enroll ? (
             <Button
-              onClick={() => onApply(course)}
-              disabled={applying === course.id}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleApply}
+              disabled={isApplying || applying === course.id || localApplicationStatus === 'applying'}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
               size="lg"
             >
-              {applying === course.id ? (
+              {isApplying || localApplicationStatus === 'applying' ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Applying...
+                  Submitting Application...
                 </>
               ) : (
                 <>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Apply Now
+                  <Send className="w-4 h-4 mr-2" />
+                  Apply for Course
                 </>
               )}
             </Button>
           ) : (
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <AlertCircle className="w-4 h-4" />
-              {courseData.can_enroll.message}
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 font-medium p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <AlertCircle className="w-4 h-4 text-orange-500" />
+              <span>{courseData.can_enroll.message}</span>
             </div>
           )}
         </div>

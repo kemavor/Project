@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Stream Test</title>
+    <script src="https://unpkg.com/hls.js@latest"></script>
+</head>
+<body style="background: #000; color: white; font-family: Arial;">
+    <h1> VisionWare Live Stream</h1>
+    <video id="video" controls muted autoplay style="width: 100%; max-width: 800px; background: #333;">
+        <p>Your browser doesn't support HTML5 video.</p>
+    </video>
+    <div id="status" style="margin: 20px 0; padding: 10px; background: #333; border-radius: 5px;">
+        Initializing...
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const streamUrl = 'http://localhost:8081/hls/170be19a-d8c5-4572-b167-5afe5071c008/index.m3u8';
+        
+        function updateStatus(msg) {
+            status.textContent = new Date().toLocaleTimeString() + ': ' + msg;
+            console.log(msg);
+        }
+
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                debug: true,
+                lowLatencyMode: true
+            });
+            
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                updateStatus('Stream loaded successfully');
+                video.play().catch(e => updateStatus('Autoplay failed: ' + e.message));
+            });
+            
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                updateStatus('Error: ' + data.type + ' - ' + data.details);
+                console.error(data);
+            });
+            
+            updateStatus('Loading stream: ' + streamUrl);
+            
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            updateStatus('Using native HLS support');
+        } else {
+            updateStatus('HLS not supported');
+        }
+    </script>
+</body>
+</html>
