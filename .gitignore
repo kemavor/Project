@@ -218,6 +218,7 @@ docker-compose.override.yml
 *.old
 
 # Test files
+testme.py
 test_*.py
 *_test.py
 tests/
